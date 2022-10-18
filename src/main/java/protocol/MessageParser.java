@@ -23,10 +23,10 @@ public class MessageParser {
 
     public ProtocolMessage getMessage() {
         String[] headerAndBody = message.split("\r\n\r\n");
-        if (headerAndBody.length < 1) return null;
+        if (headerAndBody.length < 1) throw new RuntimeException("Tried to parse an invalid message.");
 
         String[] headerFields = headerAndBody[0].split(" ");
-        if (headerFields.length < 1) return null;
+        if (headerFields.length < 1) throw new RuntimeException("Tried to parse an invalid message.");
 
         String bodyMessage = headerAndBody.length == 2 ? headerAndBody[1].split("\r\n")[0] : null;
 
