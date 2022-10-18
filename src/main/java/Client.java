@@ -63,18 +63,20 @@ public class Client extends Node {
 
     public void unsubscribe(String topic) {
         try (ZContext context = new ZContext()) {
-            for (String proxy : proxies) {
+            for (String proxy: proxies) {
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                 if (!socket.connect("tcp://" + proxy)) {
                     continue;
                 }
 
-                String request = new UnsubscribeMessage(ip + ":" + port, topic).toString();
+                new UnsubscribeMessage(this.getAddress(), topic).send(socket);
+
+                String request = new UnsubscribeMessage(this.getAddress(), topic).toString();
                 socket.send(request.getBytes(ZMQ.CHARSET), 0);
 
                 byte[] reply = socket.recv(0);
 
-                StatusMessage replyMessage = (StatusMessage) new MessageParser(new String(reply, ZMQ.CHARSET)).getMessage();
+                StatusMessage replyMessage = (StatusMessage)new MessageParser(new String(reply, ZMQ.CHARSET)).getMessage();
                 if (replyMessage.getStatus().equals(ResponseStatus.OK)) {
                     System.out.println("Topic \"" + topic + "\" unsubscribed.");
                 } else {
@@ -84,7 +86,6 @@ public class Client extends Node {
                 return;
             }
         }
-
     }
 
     private static void printUsage() {
