@@ -6,9 +6,8 @@ import protocol.topics.GetMessage;
 import protocol.topics.PutMessage;
 import protocol.topics.SubscribeMessage;
 import protocol.topics.UnsubscribeMessage;
-import protocol.topics.reply.GetResponseMessage;
-import protocol.topics.reply.ResponseStatus;
-import protocol.topics.reply.StatusMessage;
+import protocol.status.ResponseStatus;
+import protocol.status.StatusMessage;
 
 public class MessageParser {
     private final String message;
@@ -32,10 +31,8 @@ public class MessageParser {
 
         switch (headerFields[0]) {
             case "STATUS":
-                if (headerFields.length == 2 && bodyMessage != null) {
-                    return new GetResponseMessage(headerFields[1], bodyMessage);
-                } else if (headerFields.length == 3) {
-                    return new StatusMessage(headerFields[1], ResponseStatus.valueOf(headerFields[2]));
+                if (headerFields.length == 3) {
+                    return new StatusMessage(headerFields[1], ResponseStatus.valueOf(headerFields[2]), bodyMessage);
                 }
                 break;
             case "GET":

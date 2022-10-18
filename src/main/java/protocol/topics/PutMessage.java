@@ -1,28 +1,21 @@
 package protocol.topics;
 
-import protocol.ProtocolMessage;
-
 // PUT <ID> <TOPIC> CRLF CRLF <MESSAGE> CRLF
-public class PutMessage extends ProtocolMessage implements TopicsMessage {
-    final private static String TYPE = "PUT";
-
-    final private String topic;
-    final private String message;
-
+public class PutMessage extends TopicsMessage {
+    private final String message;
 
     public PutMessage(String id, String topic, String message) {
-        super(id);
-        this.topic = topic;
+        super(id, topic);
         this.message = message;
     }
 
     @Override
-    public String toString() {
-        return TYPE + " " + this.id + " " + this.topic + "\r\n\r\n" + this.message + "\r\n";
+    public String getType() {
+        return "PUT";
     }
 
     @Override
-    public String getTopic() {
-        return this.topic;
+    public String getBody() {
+        return this.message;
     }
 }

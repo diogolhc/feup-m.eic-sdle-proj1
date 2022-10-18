@@ -1,4 +1,4 @@
-package protocol.topics.reply;
+package protocol.status;
 
 public enum ResponseStatus {
     OK,
