@@ -3,6 +3,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.topics.SubscribeMessage;
+import protocol.topics.UnsubscribeMessage;
 import protocol.topics.reply.ResponseStatus;
 import protocol.topics.reply.StatusMessage;
 
@@ -16,6 +17,7 @@ import java.util.stream.Stream;
 
 public class Client extends Node {
     private final List<String> proxies;
+
 
     public Client(String address, List<String> proxies) {
         super(address);
@@ -60,6 +62,28 @@ public class Client extends Node {
     }
 
     public void unsubscribe(String topic) {
+        try (ZContext context = new ZContext()) {
+            for (String proxy : proxies) {
+                ZMQ.Socket socket = context.createSocket(SocketType.REQ);
+                if (!socket.connect("tcp://" + proxy)) {
+                    continue;
+                }
+
+                String request = new UnsubscribeMessage(ip + ":" + port, topic).toString();
+                socket.send(request.getBytes(ZMQ.CHARSET), 0);
+
+                byte[] reply = socket.recv(0);
+
+                StatusMessage replyMessage = (StatusMessage) new MessageParser(new String(reply, ZMQ.CHARSET)).getMessage();
+                if (replyMessage.getStatus().equals(ResponseStatus.OK)) {
+                    System.out.println("Topic \"" + topic + "\" unsubscribed.");
+                } else {
+                    System.out.println("Unknown server response: " + replyMessage.getStatus());
+                }
+
+                return;
+            }
+        }
 
     }
 
