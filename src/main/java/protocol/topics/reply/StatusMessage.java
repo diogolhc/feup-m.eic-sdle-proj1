@@ -5,19 +5,15 @@ import protocol.ProtocolMessage;
 // STATUS <ID> <STATUS> CRLF CRLF
 public class StatusMessage extends ProtocolMessage {
     final private static String TYPE = "STATUS";
-    public enum Status {
-        OK,
-        ALREADY_SUBSCRIBED
-    }
 
-    final private Status status;
+    final private ResponseStatus status;
 
-    public StatusMessage(String id, Status status) {
+    public StatusMessage(String id, ResponseStatus status) {
         super(id);
         this.status = status;
     }
 
-    public Status getStatus() {
+    public ResponseStatus getStatus() {
         return status;
     }
 

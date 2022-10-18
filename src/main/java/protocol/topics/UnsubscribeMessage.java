@@ -3,7 +3,7 @@ package protocol.topics;
 import protocol.ProtocolMessage;
 
 // UNSUBSCRIBE <ID> <TOPIC> CRLF CRLF
-public class UnsubscribeMessage extends ProtocolMessage {
+public class UnsubscribeMessage extends ProtocolMessage implements TopicsMessage {
     final private static String TYPE = "UNSUBSCRIBE";
 
     final private String topic;
@@ -17,5 +17,10 @@ public class UnsubscribeMessage extends ProtocolMessage {
     @Override
     public String toString() {
         return TYPE + " " + this.id + " " + this.topic + "\r\n\r\n";
+    }
+
+    @Override
+    public String getTopic() {
+        return this.topic;
     }
 }

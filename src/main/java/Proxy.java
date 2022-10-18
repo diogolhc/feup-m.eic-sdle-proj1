@@ -4,10 +4,9 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
-import protocol.topics.GetMessage;
-import protocol.topics.PutMessage;
-import protocol.topics.SubscribeMessage;
-import protocol.topics.UnsubscribeMessage;
+import protocol.topics.*;
+import protocol.topics.reply.ResponseStatus;
+import protocol.topics.reply.StatusMessage;
 
 public class Proxy {
     private final TopicServerMapping topicServerMapping;
@@ -20,8 +19,21 @@ public class Proxy {
         this.port = port;
     }
 
-    public void dispatchMessage(SubscribeMessage subscribeMessage, String serverId) {
-        
+    public StatusMessage makeStatus(ResponseStatus status) {
+        return new StatusMessage(ip + ":" + port, status);
+    }
+
+    public void dispatchTopicMessage(ZContext context, ZMQ.Socket clientSocket, TopicsMessage message) {
+        String serverId = topicServerMapping.getServer(message.getTopic());
+
+        ZMQ.Socket serverSocket = context.createSocket(SocketType.REQ);
+        if (!serverSocket.connect("tcp://" + serverId)) {
+            this.makeStatus(ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
+            return;
+        }
+
+        message.send(serverSocket);
+        new MessageParser(serverSocket.recv(0)).getMessage().send(clientSocket); // TODO we could send it without even bothering to parse (more efficient) but is it worth it?
     }
 
     public void listen() {
@@ -33,17 +45,8 @@ public class Proxy {
                 // receive request from client
                 byte[] reply = socket.recv(0);
                 ProtocolMessage message = (new MessageParser(new String(reply, ZMQ.CHARSET))).getMessage();
-                if (message instanceof SubscribeMessage) {
-                    SubscribeMessage subscribeMessage = (SubscribeMessage) message;
-                    String serverId = topicServerMapping.getServer(subscribeMessage.getTopic());
-
-                    this.dispatchMessage(subscribeMessage, serverId);
-                } else if (message instanceof UnsubscribeMessage) {
-                    // TODO
-                } else if (message instanceof GetMessage) {
-                    // TODO
-                } else if (message instanceof PutMessage) {
-                    // TODO
+                if (message instanceof TopicsMessage) {
+                    this.dispatchTopicMessage(context, socket, (TopicsMessage) message);
                 } else {
                     System.out.println("Unexpected client request.");
                 }

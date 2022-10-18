@@ -3,6 +3,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.topics.SubscribeMessage;
+import protocol.topics.reply.ResponseStatus;
 import protocol.topics.reply.StatusMessage;
 
 import java.util.ArrayList;
@@ -42,9 +43,9 @@ public class Client {
                 byte[] reply = socket.recv(0);
 
                 StatusMessage replyMessage = (StatusMessage)new MessageParser(new String(reply, ZMQ.CHARSET)).getMessage();
-                if (replyMessage.getStatus().equals(StatusMessage.Status.OK)) {
+                if (replyMessage.getStatus().equals(ResponseStatus.OK)) {
                     System.out.println("Topic \"" + topic + "\" subscribed.");
-                } else if (replyMessage.getStatus().equals(StatusMessage.Status.ALREADY_SUBSCRIBED)) {
+                } else if (replyMessage.getStatus().equals(ResponseStatus.ALREADY_SUBSCRIBED)) {
                     System.out.println("Topic \"" + topic + "\" already subscribed.");
                 } else {
                     System.out.println("Unknown server response: " + replyMessage.getStatus());

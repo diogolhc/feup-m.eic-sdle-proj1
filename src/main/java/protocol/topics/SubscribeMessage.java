@@ -3,7 +3,7 @@ package protocol.topics;
 import protocol.ProtocolMessage;
 
 // SUBSCRIBE <ID> <TOPIC> CRLF CRLF
-public class SubscribeMessage extends ProtocolMessage {
+public class SubscribeMessage extends ProtocolMessage implements TopicsMessage {
     final private static String TYPE = "SUBSCRIBE";
 
     final private String topic;
@@ -14,6 +14,7 @@ public class SubscribeMessage extends ProtocolMessage {
         this.topic = topic;
     }
 
+    @Override
     public String getTopic() {
         return this.topic;
     }
