@@ -11,9 +11,9 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
+import protocol.status.ResponseStatus;
+import protocol.status.StatusMessage;
 import protocol.topics.*;
-import protocol.topics.reply.ResponseStatus;
-import protocol.topics.reply.StatusMessage;
 
 import java.util.*;
 
