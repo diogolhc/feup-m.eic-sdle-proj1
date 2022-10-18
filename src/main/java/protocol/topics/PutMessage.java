@@ -2,7 +2,7 @@ package protocol.topics;
 
 import protocol.ProtocolMessage;
 
-// PUT <ID> <TOPIC> CRLF <MESSAGE> CRLF CRLF
+// PUT <ID> <TOPIC> CRLF CRLF <MESSAGE> CRLF
 public class PutMessage extends ProtocolMessage implements TopicsMessage {
     final private static String TYPE = "PUT";
 
@@ -18,7 +18,7 @@ public class PutMessage extends ProtocolMessage implements TopicsMessage {
 
     @Override
     public String toString() {
-        return TYPE + " " + this.id + " " + this.topic + "\r\n" + this.message + "\r\n\r\n";
+        return TYPE + " " + this.id + " " + this.topic + "\r\n\r\n" + this.message + "\r\n";
     }
 
     @Override
