@@ -2,6 +2,9 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
+import protocol.ProtocolMessageInterface;
+import protocol.topics.GetMessage;
+import protocol.topics.PutMessage;
 import protocol.topics.SubscribeMessage;
 import protocol.topics.UnsubscribeMessage;
 import protocol.topics.reply.ResponseStatus;
@@ -24,67 +27,86 @@ public class Client extends Node {
         this.proxies = proxies;
     }
 
-    public void get(String topic) {
-
-    }
-
-    public void put(String topic, String message) {
-
-    }
-
-    public void subscribe(String topic) {
+    public StatusMessage send(ProtocolMessageInterface message) {
         try (ZContext context = new ZContext()) {
             for (String proxy: proxies) {
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                 if (!socket.connect("tcp://" + proxy)) {
+                    System.out.println("Could not connect to " + proxy + ".");
                     continue;
                 }
 
-                new SubscribeMessage(this.getAddress(), topic).send(socket);
+                message.send(socket);
 
-                String request = new SubscribeMessage(this.getAddress(), topic).toString();
-                socket.send(request.getBytes(ZMQ.CHARSET), 0);
-
-                byte[] reply = socket.recv(0);
-
-                StatusMessage replyMessage = (StatusMessage)new MessageParser(new String(reply, ZMQ.CHARSET)).getMessage();
-                if (replyMessage.getStatus().equals(ResponseStatus.OK)) {
-                    System.out.println("Topic \"" + topic + "\" subscribed.");
-                } else if (replyMessage.getStatus().equals(ResponseStatus.ALREADY_SUBSCRIBED)) {
-                    System.out.println("Topic \"" + topic + "\" already subscribed.");
+                ProtocolMessageInterface response = new MessageParser(socket.recv(0)).getMessage();
+                if (response instanceof StatusMessage) {
+                    return (StatusMessage) response;
                 } else {
-                    System.out.println("Unknown server response: " + replyMessage.getStatus());
+                    System.out.println("Unexpected server response.");
+                    return null;
                 }
-
-                return;
             }
+
+            System.out.println("Connection failed.");
+            return null;
+        }
+    }
+
+    public void get(String topic) {
+        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic));
+        if (replyMessage == null) return;
+
+        ResponseStatus status = replyMessage.getStatus();
+
+        if (status.equals(ResponseStatus.OK)) {
+            // TODO GetResponseMessage
+            //System.out.println("Message received from \"" + topic + "\": " + replyMessage.getMessage());
+        } else {
+            System.out.println("Unknown server response: " + replyMessage.getStatus());
+        }
+    }
+
+    public void put(String topic, String message) {
+        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, message));
+        if (replyMessage == null) return;
+
+        ResponseStatus status = replyMessage.getStatus();
+
+        if (status.equals(ResponseStatus.OK)) {
+            System.out.println("Message sent to \"" + topic + "\".");
+        } else {
+            System.out.println("Unknown server response: " + replyMessage.getStatus());
+        }
+    }
+
+    public void subscribe(String topic) {
+        StatusMessage replyMessage = this.send(new SubscribeMessage(this.getAddress(), topic));
+        if (replyMessage == null) return;
+
+        ResponseStatus status = replyMessage.getStatus();
+
+        if (status.equals(ResponseStatus.OK)) {
+            System.out.println("Topic \"" + topic + "\" subscribed.");
+        } else if (status.equals(ResponseStatus.ALREADY_SUBSCRIBED)) {
+            System.out.println("Topic \"" + topic + "\" already subscribed.");
+        } else {
+            System.out.println("Unknown server response: " + replyMessage.getStatus());
         }
     }
 
     public void unsubscribe(String topic) {
-        try (ZContext context = new ZContext()) {
-            for (String proxy : proxies) {
-                ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-                if (!socket.connect("tcp://" + proxy)) {
-                    continue;
-                }
+        StatusMessage replyMessage = this.send(new UnsubscribeMessage(this.getAddress(), topic));
+        if (replyMessage == null) return;
 
-                String request = new UnsubscribeMessage(ip + ":" + port, topic).toString();
-                socket.send(request.getBytes(ZMQ.CHARSET), 0);
+        ResponseStatus status = replyMessage.getStatus();
 
-                byte[] reply = socket.recv(0);
-
-                StatusMessage replyMessage = (StatusMessage) new MessageParser(new String(reply, ZMQ.CHARSET)).getMessage();
-                if (replyMessage.getStatus().equals(ResponseStatus.OK)) {
-                    System.out.println("Topic \"" + topic + "\" unsubscribed.");
-                } else {
-                    System.out.println("Unknown server response: " + replyMessage.getStatus());
-                }
-
-                return;
-            }
+        if (status.equals(ResponseStatus.OK)) {
+            System.out.println("Topic \"" + topic + "\" unsubscribed.");
+        } else if (status.equals(ResponseStatus.ALREADY_UNSUBSCRIBED)) {
+            System.out.println("Topic \"" + topic + "\" already unsubscribed.");
+        } else {
+            System.out.println("Unknown server response: " + replyMessage.getStatus());
         }
-
     }
 
     private static void printUsage() {
