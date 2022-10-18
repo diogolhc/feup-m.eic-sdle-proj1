@@ -23,7 +23,7 @@ public class Client {
         this.port = port;
         this.proxies = new ArrayList<>();
 
-        try (Stream<String> stream = Files.lines(Paths.get("./filesystems/proxyports.txt"))) {
+        try (Stream<String> stream = Files.lines(Paths.get("./filesystems/proxyaddresses.txt"))) {
             stream.forEach(this.proxies::add);
         } catch (IOException e) {
             throw new RuntimeException(e);
