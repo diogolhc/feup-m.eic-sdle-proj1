@@ -1,26 +1,13 @@
 package protocol.topics;
 
-import protocol.ProtocolMessage;
-
 // SUBSCRIBE <ID> <TOPIC> CRLF CRLF
-public class SubscribeMessage extends ProtocolMessage implements TopicsMessage {
-    final private static String TYPE = "SUBSCRIBE";
-
-    final private String topic;
-
-
+public class SubscribeMessage extends TopicsMessage {
     public SubscribeMessage(String id, String topic) {
-        super(id);
-        this.topic = topic;
+        super(id, topic);
     }
 
     @Override
-    public String getTopic() {
-        return this.topic;
-    }
-
-    @Override
-    public String toString() {
-        return TYPE + " " + this.id + " " + this.topic + "\r\n\r\n";
+    public String getType() {
+        return "SUBSCRIBE";
     }
 }

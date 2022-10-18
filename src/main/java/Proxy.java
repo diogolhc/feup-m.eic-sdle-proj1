@@ -5,8 +5,8 @@ import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
 import protocol.topics.*;
-import protocol.topics.reply.ResponseStatus;
-import protocol.topics.reply.StatusMessage;
+import protocol.status.ResponseStatus;
+import protocol.status.StatusMessage;
 
 public class Proxy extends Node {
     private final TopicServerMapping topicServerMapping;

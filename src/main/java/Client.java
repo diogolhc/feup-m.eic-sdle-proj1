@@ -2,21 +2,19 @@ import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
-import protocol.ProtocolMessageInterface;
+import protocol.ProtocolMessage;
 import protocol.topics.GetMessage;
 import protocol.topics.PutMessage;
 import protocol.topics.SubscribeMessage;
 import protocol.topics.UnsubscribeMessage;
-import protocol.topics.reply.ResponseStatus;
-import protocol.topics.reply.StatusMessage;
+import protocol.status.ResponseStatus;
+import protocol.status.StatusMessage;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 public class Client extends Node {
     private final List<String> proxies;
@@ -27,7 +25,7 @@ public class Client extends Node {
         this.proxies = proxies;
     }
 
-    public StatusMessage send(ProtocolMessageInterface message) {
+    public StatusMessage send(ProtocolMessage message) {
         try (ZContext context = new ZContext()) {
             for (String proxy: proxies) {
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
@@ -38,7 +36,7 @@ public class Client extends Node {
 
                 message.send(socket);
 
-                ProtocolMessageInterface response = new MessageParser(socket.recv(0)).getMessage();
+                ProtocolMessage response = new MessageParser(socket.recv(0)).getMessage();
                 if (response instanceof StatusMessage) {
                     return (StatusMessage) response;
                 } else {
@@ -58,9 +56,10 @@ public class Client extends Node {
 
         ResponseStatus status = replyMessage.getStatus();
 
-        if (status.equals(ResponseStatus.OK)) {
-            // TODO GetResponseMessage
-            //System.out.println("Message received from \"" + topic + "\": " + replyMessage.getMessage());
+        if (status.equals(ResponseStatus.OK) && replyMessage.getBody() != null) {
+            System.out.println("Message received from \"" + topic + "\".");
+            System.out.println("==================================================");
+            System.out.println(replyMessage.getBody());
         } else {
             System.out.println("Unknown server response: " + replyMessage.getStatus());
         }
