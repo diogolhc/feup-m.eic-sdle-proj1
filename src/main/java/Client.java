@@ -6,8 +6,12 @@ import protocol.topics.SubscribeMessage;
 import protocol.topics.reply.ResponseStatus;
 import protocol.topics.reply.StatusMessage;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class Client {
     private final List<String> proxies;
@@ -18,7 +22,12 @@ public class Client {
         this.ip = ip;
         this.port = port;
         this.proxies = new ArrayList<>();
-        // TODO read from filesystems folder
+
+        try (Stream<String> stream = Files.lines(Paths.get("./filesystems/proxyports.txt"))) {
+            stream.forEach(this.proxies::add);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void get(String topic) {
