@@ -8,19 +8,12 @@ import protocol.topics.*;
 import protocol.topics.reply.ResponseStatus;
 import protocol.topics.reply.StatusMessage;
 
-public class Proxy {
+public class Proxy extends Node {
     private final TopicServerMapping topicServerMapping;
-    private final String ip;
-    private final String port;
 
-    public Proxy(String ip, String port) {
+    public Proxy(String address) {
+        super(address);
         topicServerMapping = new TopicServerMapping();
-        this.ip = ip;
-        this.port = port;
-    }
-
-    public StatusMessage makeStatus(ResponseStatus status) {
-        return new StatusMessage(ip + ":" + port, status);
     }
 
     public void dispatchTopicMessage(ZContext context, ZMQ.Socket clientSocket, TopicsMessage message) {
@@ -28,7 +21,7 @@ public class Proxy {
 
         ZMQ.Socket serverSocket = context.createSocket(SocketType.REQ);
         if (!serverSocket.connect("tcp://" + serverId)) {
-            this.makeStatus(ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
+            new StatusMessage(this.getAddress(), ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
             return;
         }
 
@@ -39,7 +32,7 @@ public class Proxy {
     public void listen() {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REP);
-            socket.bind("tcp://*:" + this.port);
+            socket.bind("tcp://*:" + this.getPort());
 
             while (!Thread.currentThread().isInterrupted()) {
                 // receive request from client
@@ -50,19 +43,9 @@ public class Proxy {
                 } else {
                     System.out.println("Unexpected client request.");
                 }
-
-                // TODO send request to a server
-
-                // TODO receive reply from the server
-
-                // TODO reply to the client
-
             }
-
         }
     }
-
-
 
     private static void printUsage() {
         System.out.println("usage: java Proxy <IP>:<PORT>");
@@ -74,16 +57,13 @@ public class Proxy {
             return;
         }
 
-        String[] ipPort = args[0].split(":");
-        try {
-            Integer.parseInt(ipPort[0]);
-            Integer.parseInt(ipPort[1]);
-        } catch (NumberFormatException exception) {
+        if (!Node.validateAddress(args[0])) {
             System.out.println("Invalid <IP>:<PORT>: " + args[0]);
+            printUsage();
             return;
         }
 
-        Proxy proxy = new Proxy(ipPort[0], ipPort[1]);
+        Proxy proxy = new Proxy(args[0]);
         proxy.listen();
     }
 }
