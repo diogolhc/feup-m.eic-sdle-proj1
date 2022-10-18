@@ -15,7 +15,7 @@ public class PersistentStorage {
         File directory = new File(this.basePath);
         if (!directory.exists()){
             if (!directory.mkdir()) {
-                System.err.println("Not able to create file for server " + serverId);
+                throw new RuntimeException("Could not create directory " + serverId + ".");
             }
         }
     }
