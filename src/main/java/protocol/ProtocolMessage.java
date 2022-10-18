@@ -6,4 +6,8 @@ public abstract class ProtocolMessage implements ProtocolMessageInterface {
     public ProtocolMessage(String id) {
         this.id = id;
     }
+
+    public String getId(){
+        return id;
+    }
 }

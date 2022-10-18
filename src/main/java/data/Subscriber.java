@@ -7,6 +7,7 @@ import java.util.Queue;
 
 public class Subscriber {
     private String id;
+
     private Map<Topic, Queue<Message>> messages;
 
     public Subscriber(String id) {
@@ -20,6 +21,8 @@ public class Subscriber {
     public void addTopic(Topic topic) {
         this.messages.put(topic, new LinkedList<>());
     }
+
+    public boolean containsTopic(Topic topic) {return this.messages.containsKey(topic);}
 
     @Override
     public boolean equals(Object o) {
