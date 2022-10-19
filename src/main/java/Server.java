@@ -17,8 +17,7 @@ import protocol.topics.*;
 
 import java.util.*;
 
-public class Server extends Node
-{
+public class Server extends Node {
 
     private final Map<String, Topic> topics;
     private final Map<String, Subscriber> subscribers;
@@ -50,7 +49,7 @@ public class Server extends Node
                             subscribers.put(subId, new Subscriber(subId));
                         }
 
-                        StatusMessage statusMessage ;
+                        StatusMessage statusMessage;
 
                         if (subscribers.get(subId).containsTopic(currentTopic)) {
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_SUBSCRIBED);
@@ -63,6 +62,22 @@ public class Server extends Node
                         statusMessage.send(socket);
 
                     } else if (message instanceof UnsubscribeMessage) {
+                        Topic currentTopic = topics.get(((UnsubscribeMessage) message).getTopic());
+
+                        String unsubId = message.getId();
+
+                        StatusMessage statusMessage;
+
+                        if (!subscribers.containsKey(unsubId)) {
+                            statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
+                        } else if (!subscribers.get(unsubId).containsTopic(currentTopic)) {
+                            statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_UNSUBSCRIBED);
+                        } else {
+                            currentTopic.removeSub(subscribers.get(unsubId));
+                            statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
+                        }
+
+                        statusMessage.send(socket);
 
                     } else if (message instanceof GetMessage) {
 
@@ -77,8 +92,7 @@ public class Server extends Node
         }
     }
 
-    public static void main(String[] args) throws Exception
-    {
+    public static void main(String[] args) throws Exception {
         Server myServer = new Server("127.0.0.1:4001");
         myServer.run();
     }
