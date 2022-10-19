@@ -28,6 +28,10 @@ public class Subscriber {
         return messages.isEmpty();
     }
 
+    public void addMessageToTopic(Message message, String topicName) {
+        this.messages.get(new Topic(topicName)).add(message);
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

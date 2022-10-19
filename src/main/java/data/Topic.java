@@ -7,10 +7,20 @@ import java.util.Set;
 public class Topic {
     private final String name;
     private final Set<Subscriber> subscribers;
+    private Integer counter;
 
     public Topic(String name) {
         this.name = name;
         this.subscribers = new HashSet<>();
+        this.counter = 0;
+    }
+
+    public Integer useCounter(){
+        return counter++;
+    }
+
+    public Integer getCounter(){
+        return counter;
     }
 
     public void addSub(Subscriber subscriber) {
@@ -20,6 +30,10 @@ public class Topic {
     public void removeSub(Subscriber subscriber) {
         subscriber.unsubscribeTopic(this);
         this.subscribers.remove(subscriber);
+    }
+
+    public Set<Subscriber> getSubscribers() { //TODO this is probably a code smell
+        return this.subscribers;
     }
 
     @Override

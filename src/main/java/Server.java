@@ -1,3 +1,4 @@
+import data.Message;
 import data.Subscriber;
 import data.Topic;
 import org.zeromq.SocketType;
@@ -87,6 +88,31 @@ public class Server extends Node {
 
                     } else if (message instanceof PutMessage) {
 
+                        String topicName = ((PutMessage) message).getTopic();
+
+                        StatusMessage statusMessage;
+
+                        if (!this.topics.containsKey(topicName)) {
+                            statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
+                        } else {
+                            // Write to file
+
+                            String newMessageId = topicName + topics.get(topicName).useCounter();
+                            storage.writeSync("topics/" + topicName + "/counter.txt",
+                                    topics.get(topicName).getCounter().toString());
+                            storage.writeSync("topics/" + topicName + "/" + newMessageId + ".txt",
+                                    message.getBody() + "\n");
+
+                            // Update subscribers queues
+
+                            for (Subscriber subscriber : topics.get(topicName).getSubscribers()) {
+                                subscriber.addMessageToTopic(new Message(message.getBody()), topicName);
+                            }
+
+                            statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
+                        }
+
+                        statusMessage.send(socket);
                     }
 
                 } else {
