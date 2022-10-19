@@ -69,6 +69,10 @@ public class Server extends Node {
                         } else {
                             currentTopic.removeSub(this.subscribers.get(unsubId));
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
+
+                            if (this.subscribers.get(unsubId).isEmpty()) {
+                                this.subscribers.remove(unsubId);
+                            }
                         }
 
                         statusMessage.send(socket);

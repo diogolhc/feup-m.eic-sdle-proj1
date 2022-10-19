@@ -24,6 +24,10 @@ public class Subscriber {
 
     public boolean containsTopic(Topic topic) {return this.messages.containsKey(topic);}
 
+    public boolean isEmpty(){
+        return messages.isEmpty();
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
