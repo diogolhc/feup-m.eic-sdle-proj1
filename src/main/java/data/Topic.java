@@ -41,6 +41,10 @@ public class Topic {
         return this.subscribers.values();
     }
 
+    public Subscriber getSubscriber(String subscriber) {
+        return this.subscribers.get(subscriber);
+    }
+
     public String getName() {
         return this.name;
     }

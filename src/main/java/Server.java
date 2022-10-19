@@ -32,9 +32,9 @@ public class Server extends Node {
                 byte[] reply = socket.recv(0);
                 ProtocolMessage message = (new MessageParser(reply)).getMessage();
                 if (message instanceof TopicsMessage) {
-                    ResponseStatus responseStatus = this.handleTopicMessage((TopicsMessage) message);
+                    StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
                     // TODO respond status with server address or client address?
-                    new StatusMessage(this.getAddress(), responseStatus).send(socket);
+                    statusMessage.send(socket);
                 } else {
                     System.out.println("Unexpected request.");
                 }
@@ -42,51 +42,52 @@ public class Server extends Node {
         }
     }
 
-    public ResponseStatus handleTopicMessage(TopicsMessage message) {
+    public StatusMessage handleTopicMessage(TopicsMessage message) {
         if (!this.topics.containsKey(message.getTopic())) {
-            return ResponseStatus.WRONG_SERVER;
+            return new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
         }
+        String clientId = message.getId();
         Topic topic = this.topics.get(message.getTopic());
         if (message instanceof SubscribeMessage) {
-            SubscribeMessage subscribeMessage = (SubscribeMessage) message;
-            if (topic.isSubscribed(subscribeMessage.getId())) {
-                return ResponseStatus.ALREADY_SUBSCRIBED;
+            if (topic.isSubscribed(clientId)) {
+                return new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_SUBSCRIBED);
             }
 
-            topic.addSubscriber(subscribeMessage.getId());
+            topic.addSubscriber(clientId);
             // TODO storage (might make sense to encapsulate this inside addSubscriber)
             // storage.writeSync("subscribers.txt", subId + "\n");
         } else if (message instanceof UnsubscribeMessage) {
-            UnsubscribeMessage unsubscribeMessage = (UnsubscribeMessage) message;
-            if (!topic.isSubscribed(unsubscribeMessage.getId())) {
-                return ResponseStatus.ALREADY_UNSUBSCRIBED;
+            if (!topic.isSubscribed(clientId)) {
+                return new StatusMessage(this.getAddress(), ResponseStatus.NOT_SUBSCRIBED);
             }
 
-            topic.removeSubscriber(unsubscribeMessage.getId());
+            topic.removeSubscriber(clientId);
             // TODO storage (might make sense to encapsulate this inside addSubscriber)
             // storage.writeSync("subscribers.txt", subId + "\n");
         } else if (message instanceof GetMessage) {
+            if (!topic.isSubscribed(clientId)) {
+                return new StatusMessage(this.getAddress(), ResponseStatus.NOT_SUBSCRIBED);
+            }
 
+            Message messageToGet = topic.getSubscriber(clientId).getMessage();
+
+            // TODO storage (might make sense to encapsulate file writes)
+            return new StatusMessage(this.getAddress(), ResponseStatus.OK, messageToGet.getContent());
         } else if (message instanceof PutMessage) {
-            PutMessage putMessage = (PutMessage) message;
+            Message messageToPut = new Message(topic.useCounter(), message.getBody());
 
-            // Write to file
             // TODO storage (might make sense to encapsulate useCounter and file writes)
-            Message messageToPut = new Message(topic.useCounter(), putMessage.getBody());
-
             //storage.writeSync("topics/" + topic.getName() + "/counter.txt",
             //        topic.getCounter().toString());
             //storage.writeSync("topics/" + topic.getName() + "/" + messageToPut.getId() + ".txt",
             //        message.getBody() + "\n");
-
-            // Update subscribers queues
 
             for (Subscriber subscriber: topic.getSubscribers()) {
                 subscriber.putMessage(messageToPut);
             }
         }
 
-        return ResponseStatus.OK;
+        return new StatusMessage(this.getAddress(), ResponseStatus.OK);
     }
 
     private static void printUsage() {

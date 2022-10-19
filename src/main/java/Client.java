@@ -101,7 +101,7 @@ public class Client extends Node {
 
         if (status.equals(ResponseStatus.OK)) {
             System.out.println("Topic \"" + topic + "\" unsubscribed.");
-        } else if (status.equals(ResponseStatus.ALREADY_UNSUBSCRIBED)) {
+        } else if (status.equals(ResponseStatus.NOT_SUBSCRIBED)) {
             System.out.println("Topic \"" + topic + "\" already unsubscribed.");
         } else {
             System.out.println("Unknown server response: " + replyMessage.getStatus());
