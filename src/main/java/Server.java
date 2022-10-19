@@ -10,20 +10,16 @@ import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 import protocol.topics.*;
 
-import java.io.IOException;
 import java.util.*;
 
 public class Server extends Node {
-
     private PersistentStorage storage;
     private final Map<String, Topic> topics;
-    private final Map<String, Subscriber> subscribers;
 
     public Server(String address) {
         super(address);
         this.storage = new PersistentStorage(address);
         this.topics = new HashMap<>();
-        this.subscribers = new HashMap<>();
     }
 
     public void listen() {
@@ -36,7 +32,9 @@ public class Server extends Node {
                 byte[] reply = socket.recv(0);
                 ProtocolMessage message = (new MessageParser(reply)).getMessage();
                 if (message instanceof TopicsMessage) {
-                    this.handleTopicMessage(socket, (TopicsMessage) message);
+                    ResponseStatus responseStatus = this.handleTopicMessage((TopicsMessage) message);
+                    // TODO respond status with server address or client address?
+                    new StatusMessage(this.getAddress(), responseStatus).send(socket);
                 } else {
                     System.out.println("Unexpected request.");
                 }
@@ -44,89 +42,51 @@ public class Server extends Node {
         }
     }
 
-    public void handleTopicMessage(ZMQ.Socket socket, TopicsMessage message) {
+    public ResponseStatus handleTopicMessage(TopicsMessage message) {
         if (!this.topics.containsKey(message.getTopic())) {
-            // TODO handle wrong_server
-            return;
+            return ResponseStatus.WRONG_SERVER;
         }
         Topic topic = this.topics.get(message.getTopic());
         if (message instanceof SubscribeMessage) {
             SubscribeMessage subscribeMessage = (SubscribeMessage) message;
-
-            String subId = message.getId();
-
-            if (!this.subscribers.containsKey(subId)) {
-                this.subscribers.put(subId, new Subscriber(subId));
+            if (topic.isSubscribed(subscribeMessage.getId())) {
+                return ResponseStatus.ALREADY_SUBSCRIBED;
             }
 
-            StatusMessage statusMessage;
-
-            if (this.subscribers.get(subId).containsTopic(topic)) {
-                statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_SUBSCRIBED);
-            } else {
-                this.subscribers.get(subId).addTopic(topic);
-                topic.addSub(this.subscribers.get(subId));
-                statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
-
-                storage.writeSync("subscribers.txt", subId + "\n");
-            }
-
-            statusMessage.send(socket);
-
+            topic.addSubscriber(subscribeMessage.getId());
+            // TODO storage (might make sense to encapsulate this inside addSubscriber)
+            // storage.writeSync("subscribers.txt", subId + "\n");
         } else if (message instanceof UnsubscribeMessage) {
-            String topicName = ((UnsubscribeMessage) message).getTopic();
-            Topic currentTopic = this.topics.get(topicName);
-
-            String unsubId = message.getId();
-
-            StatusMessage statusMessage;
-
-            if (!this.topics.containsKey(topicName)) {
-                statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
-            } else if (!this.subscribers.get(unsubId).containsTopic(currentTopic)) {
-                statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_UNSUBSCRIBED);
-            } else {
-                currentTopic.removeSub(this.subscribers.get(unsubId));
-                statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
-
-                if (this.subscribers.get(unsubId).isEmpty()) {
-                    this.subscribers.remove(unsubId);
-                    // TODO Remove from "subscribers.txt" file
-                }
+            UnsubscribeMessage unsubscribeMessage = (UnsubscribeMessage) message;
+            if (!topic.isSubscribed(unsubscribeMessage.getId())) {
+                return ResponseStatus.ALREADY_UNSUBSCRIBED;
             }
 
-            statusMessage.send(socket);
-
+            topic.removeSubscriber(unsubscribeMessage.getId());
+            // TODO storage (might make sense to encapsulate this inside addSubscriber)
+            // storage.writeSync("subscribers.txt", subId + "\n");
         } else if (message instanceof GetMessage) {
 
         } else if (message instanceof PutMessage) {
+            PutMessage putMessage = (PutMessage) message;
 
-            String topicName = ((PutMessage) message).getTopic();
+            // Write to file
+            // TODO storage (might make sense to encapsulate useCounter and file writes)
+            Message messageToPut = new Message(topic.useCounter(), putMessage.getBody());
 
-            StatusMessage statusMessage;
+            //storage.writeSync("topics/" + topic.getName() + "/counter.txt",
+            //        topic.getCounter().toString());
+            //storage.writeSync("topics/" + topic.getName() + "/" + messageToPut.getId() + ".txt",
+            //        message.getBody() + "\n");
 
-            if (!this.topics.containsKey(topicName)) {
-                statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
-            } else {
-                // Write to file
+            // Update subscribers queues
 
-                String newMessageId = topicName + topics.get(topicName).useCounter();
-                storage.writeSync("topics/" + topicName + "/counter.txt",
-                        topics.get(topicName).getCounter().toString());
-                storage.writeSync("topics/" + topicName + "/" + newMessageId + ".txt",
-                        message.getBody() + "\n");
-
-                // Update subscribers queues
-
-                for (Subscriber subscriber : topics.get(topicName).getSubscribers()) {
-                    subscriber.addMessageToTopic(new Message(message.getBody()), topicName);
-                }
-
-                statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
+            for (Subscriber subscriber: topic.getSubscribers()) {
+                subscriber.putMessage(messageToPut);
             }
-
-            statusMessage.send(socket);
         }
+
+        return ResponseStatus.OK;
     }
 
     private static void printUsage() {

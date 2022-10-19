@@ -8,28 +8,30 @@ import java.util.Queue;
 public class Subscriber {
     private String id;
 
-    private Map<Topic, Queue<Message>> messages;
+    private Queue<Message> messages;
 
     public Subscriber(String id) {
         this.id = id;
+    }
+
+    public String getId() {
+        return this.id;
     }
 
     public void unsubscribeTopic(Topic topic) {
         this.messages.remove(topic);
     }
 
-    public void addTopic(Topic topic) {
-        this.messages.put(topic, new LinkedList<>());
-    }
-
-    public boolean containsTopic(Topic topic) {return this.messages.containsKey(topic);}
-
     public boolean isEmpty(){
         return messages.isEmpty();
     }
 
-    public void addMessageToTopic(Message message, String topicName) {
-        this.messages.get(new Topic(topicName)).add(message);
+    public void putMessage(Message message) {
+        this.messages.add(message);
+    }
+
+    public Message getMessage() {
+        return this.messages.remove();
     }
 
     @Override

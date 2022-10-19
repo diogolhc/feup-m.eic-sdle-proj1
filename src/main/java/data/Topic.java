@@ -1,17 +1,15 @@
 package data;
 
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class Topic {
     private final String name;
-    private final Set<Subscriber> subscribers;
+    private final Map<String, Subscriber> subscribers;
     private Integer counter;
 
     public Topic(String name) {
         this.name = name;
-        this.subscribers = new HashSet<>();
+        this.subscribers = new HashMap<>();
         this.counter = 0;
     }
 
@@ -23,17 +21,36 @@ public class Topic {
         return counter;
     }
 
-    public void addSub(Subscriber subscriber) {
-        this.subscribers.add(subscriber);
+    public void addSubscriber(Subscriber subscriber) {
+        this.subscribers.put(subscriber.getId(), subscriber);
     }
 
-    public void removeSub(Subscriber subscriber) {
-        subscriber.unsubscribeTopic(this);
+    public void addSubscriber(String subscriber) {
+        this.addSubscriber(new Subscriber(subscriber));
+    }
+
+    public void removeSubscriber(Subscriber subscriber) {
+        this.removeSubscriber(subscriber.getId());
+    }
+
+    public void removeSubscriber(String subscriber) {
         this.subscribers.remove(subscriber);
     }
 
-    public Set<Subscriber> getSubscribers() { //TODO this is probably a code smell
-        return this.subscribers;
+    public Collection<Subscriber> getSubscribers() {
+        return this.subscribers.values();
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public boolean isSubscribed(Subscriber subscriber) {
+        return this.isSubscribed(subscriber.getId());
+    }
+
+    public boolean isSubscribed(String subscriber) {
+        return this.subscribers.containsKey(subscriber);
     }
 
     @Override

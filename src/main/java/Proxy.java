@@ -21,6 +21,7 @@ public class Proxy extends Node {
 
         ZMQ.Socket serverSocket = context.createSocket(SocketType.REQ);
         if (!serverSocket.connect("tcp://" + serverId)) {
+            // TODO proxy address or client address?
             new StatusMessage(this.getAddress(), ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
             return;
         }
