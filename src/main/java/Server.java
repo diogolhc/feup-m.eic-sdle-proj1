@@ -9,15 +9,18 @@ import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 import protocol.topics.*;
 
+import java.io.IOException;
 import java.util.*;
 
 public class Server extends Node {
 
+    private PersistentStorage storage;
     private final Map<String, Topic> topics;
     private final Map<String, Subscriber> subscribers;
 
     public Server(String address) {
         super(address);
+        this.storage = new PersistentStorage(address);
         this.topics = new HashMap<>();
         this.subscribers = new HashMap<>();
     }
@@ -50,6 +53,8 @@ public class Server extends Node {
                             this.subscribers.get(subId).addTopic(currentTopic);
                             currentTopic.addSub(this.subscribers.get(subId));
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
+
+                            storage.writeSync("subscribers.txt", subId + "\n");
                         }
 
                         statusMessage.send(socket);
@@ -72,6 +77,7 @@ public class Server extends Node {
 
                             if (this.subscribers.get(unsubId).isEmpty()) {
                                 this.subscribers.remove(unsubId);
+                                // TODO Remove from "subscribers.txt" file
                             }
                         }
 
@@ -87,6 +93,8 @@ public class Server extends Node {
                     System.out.println("Unexpected client request.");
                 }
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
