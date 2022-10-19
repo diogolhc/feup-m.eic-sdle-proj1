@@ -1,9 +1,3 @@
-//
-//  Hello World server in Java
-//  Binds REP socket to tcp://*:5555
-//  Expects "Hello" from client, replies with "World"
-//
-
 import data.Subscriber;
 import data.Topic;
 import org.zeromq.SocketType;
@@ -40,40 +34,39 @@ public class Server extends Node {
                 if (message instanceof TopicsMessage) {
 
                     if (message instanceof SubscribeMessage) {
-
-                        Topic currentTopic = topics.get(((SubscribeMessage) message).getTopic());
+                        Topic currentTopic = this.topics.get(((SubscribeMessage) message).getTopic());
 
                         String subId = message.getId();
 
-                        if (!subscribers.containsKey(subId)) {
-                            subscribers.put(subId, new Subscriber(subId));
+                        if (!this.subscribers.containsKey(subId)) {
+                            this.subscribers.put(subId, new Subscriber(subId));
                         }
 
                         StatusMessage statusMessage;
 
-                        if (subscribers.get(subId).containsTopic(currentTopic)) {
+                        if (this.subscribers.get(subId).containsTopic(currentTopic)) {
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_SUBSCRIBED);
                         } else {
-                            subscribers.get(subId).addTopic(currentTopic);
-                            currentTopic.addSub(subscribers.get(subId));
+                            this.subscribers.get(subId).addTopic(currentTopic);
+                            currentTopic.addSub(this.subscribers.get(subId));
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
                         }
 
                         statusMessage.send(socket);
 
                     } else if (message instanceof UnsubscribeMessage) {
-                        Topic currentTopic = topics.get(((UnsubscribeMessage) message).getTopic());
+                        Topic currentTopic = this.topics.get(((UnsubscribeMessage) message).getTopic());
 
                         String unsubId = message.getId();
 
                         StatusMessage statusMessage;
 
-                        if (!subscribers.containsKey(unsubId)) {
+                        if (!this.subscribers.containsKey(unsubId)) {
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
-                        } else if (!subscribers.get(unsubId).containsTopic(currentTopic)) {
+                        } else if (!this.subscribers.get(unsubId).containsTopic(currentTopic)) {
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_UNSUBSCRIBED);
                         } else {
-                            currentTopic.removeSub(subscribers.get(unsubId));
+                            currentTopic.removeSub(this.subscribers.get(unsubId));
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.OK);
                         }
 

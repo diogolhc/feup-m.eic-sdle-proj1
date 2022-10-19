@@ -24,7 +24,7 @@ public class TopicServerMapping {
     private String addTopic(String topic) {
         String serverIdLess = null;
         int count = Integer.MAX_VALUE;
-        for (Map.Entry<String, Set<String>> entry : topicsPerServer.entrySet()) {
+        for (Map.Entry<String, Set<String>> entry : this.topicsPerServer.entrySet()) {
             int size = entry.getValue().size();
             if (size < count) {
                 serverIdLess = entry.getKey();

@@ -10,7 +10,7 @@ public class PersistentStorage {
     String basePath;
 
     public PersistentStorage(String serverId) {
-        this.basePath = DIRECTORY_PATH_BASE + serverId + "/";
+        this.basePath = this.DIRECTORY_PATH_BASE + serverId + "/";
 
         File directory = new File(this.basePath);
         if (!directory.exists()){

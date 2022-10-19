@@ -21,7 +21,7 @@ public abstract class ProtocolMessage {
     }
 
     public String getId() {
-        return id;
+        return this.id;
     }
 
     @Override

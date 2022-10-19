@@ -13,11 +13,11 @@ public class Proxy extends Node {
 
     public Proxy(String address) {
         super(address);
-        topicServerMapping = new TopicServerMapping();
+        this.topicServerMapping = new TopicServerMapping();
     }
 
     public void dispatchTopicMessage(ZContext context, ZMQ.Socket clientSocket, TopicsMessage message) {
-        String serverId = topicServerMapping.getServer(message.getTopic());
+        String serverId = this.topicServerMapping.getServer(message.getTopic());
 
         ZMQ.Socket serverSocket = context.createSocket(SocketType.REQ);
         if (!serverSocket.connect("tcp://" + serverId)) {

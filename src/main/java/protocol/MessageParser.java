@@ -21,7 +21,7 @@ public class MessageParser {
     }
 
     public ProtocolMessage getMessage() {
-        String[] headerAndBody = message.split("\r\n\r\n");
+        String[] headerAndBody = this.message.split("\r\n\r\n");
         if (headerAndBody.length < 1) throw new RuntimeException("Tried to parse an invalid message.");
 
         String[] headerFields = headerAndBody[0].split(" ");
