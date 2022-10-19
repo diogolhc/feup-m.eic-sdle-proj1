@@ -37,7 +37,7 @@ public class Proxy extends Node {
             while (!Thread.currentThread().isInterrupted()) {
                 // receive request from client
                 byte[] reply = socket.recv(0);
-                ProtocolMessage message = (new MessageParser(new String(reply, ZMQ.CHARSET))).getMessage();
+                ProtocolMessage message = new MessageParser(reply).getMessage();
                 if (message instanceof TopicsMessage) {
                     this.dispatchTopicMessage(context, socket, (TopicsMessage) message);
                 } else {
