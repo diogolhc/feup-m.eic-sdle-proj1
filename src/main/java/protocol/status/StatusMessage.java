@@ -6,6 +6,8 @@ import java.util.List;
 
 // STATUS <ID> <STATUS> CRLF CRLF
 public class StatusMessage extends ProtocolMessage {
+    public final static String TYPE = "STATUS";
+
     private final ResponseStatus status;
     private final String message;
 
@@ -30,7 +32,7 @@ public class StatusMessage extends ProtocolMessage {
 
     @Override
     public String getType() {
-        return "STATUS";
+        return TYPE;
     }
 
     @Override

@@ -13,7 +13,7 @@ public abstract class ProtocolMessage {
         return new ArrayList<>();
     }
     public String getBody() {
-        return "";
+        return null;
     }
 
     public ProtocolMessage(String id) {

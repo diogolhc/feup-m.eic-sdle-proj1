@@ -2,12 +2,15 @@ package protocol;
 
 import org.zeromq.ZMQ;
 import protocol.membership.ConnectServerMessage;
+import protocol.membership.PeriodicServerMessage;
 import protocol.topics.GetMessage;
 import protocol.topics.PutMessage;
 import protocol.topics.SubscribeMessage;
 import protocol.topics.UnsubscribeMessage;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
+
+import java.util.Arrays;
 
 public class MessageParser {
     private final String message;
@@ -30,34 +33,39 @@ public class MessageParser {
         String bodyMessage = headerAndBody.length == 2 ? headerAndBody[1].split("\r\n")[0] : null;
 
         switch (headerFields[0]) {
-            case "STATUS":
+            case StatusMessage.TYPE:
                 if (headerFields.length == 3) {
                     return new StatusMessage(headerFields[1], ResponseStatus.valueOf(headerFields[2]), bodyMessage);
                 }
                 break;
-            case "GET":
+            case GetMessage.TYPE:
                 if (headerFields.length == 3) {
                     return new GetMessage(headerFields[1], headerFields[2]);
                 }
                 break;
-            case "PUT":
+            case PutMessage.TYPE:
                 if (headerFields.length == 3 && bodyMessage != null) {
                     return new PutMessage(headerFields[1], headerFields[2], bodyMessage);
                 }
                 break;
-            case "SUBSCRIBE":
+            case SubscribeMessage.TYPE:
                 if (headerFields.length == 3) {
                     return new SubscribeMessage(headerFields[1], headerFields[2]);
                 }
                 break;
-            case "UNSUBSCRIBE":
+            case UnsubscribeMessage.TYPE:
                 if (headerFields.length == 3) {
                     return new UnsubscribeMessage(headerFields[1], headerFields[2]);
                 }
                 break;
-            case "CONNECT_SERVER":
+            case ConnectServerMessage.TYPE:
                 if (headerFields.length == 2) {
                     return new ConnectServerMessage(headerFields[1]);
+                }
+                break;
+            case PeriodicServerMessage.TYPE:
+                if (headerFields.length == 2 && bodyMessage != null) {
+                    return new PeriodicServerMessage(headerFields[1], Arrays.asList(bodyMessage.split(",").clone()));
                 }
                 break;
         }

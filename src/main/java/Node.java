@@ -29,6 +29,7 @@ public abstract class Node {
     }
 
     public static boolean validateAddress(String address) {
+        // TODO validate with regex, the try catch is wrong
         String[] ipPort = address.split(":");
         if (ipPort.length != 2) {
             return false;

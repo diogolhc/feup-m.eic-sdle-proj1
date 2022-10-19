@@ -2,6 +2,7 @@ package protocol.topics;
 
 // PUT <ID> <TOPIC> CRLF CRLF <MESSAGE> CRLF
 public class PutMessage extends TopicsMessage {
+    public final static String TYPE = "PUT";
     private final String message;
 
     public PutMessage(String id, String topic, String message) {
@@ -11,7 +12,7 @@ public class PutMessage extends TopicsMessage {
 
     @Override
     public String getType() {
-        return "PUT";
+        return TYPE;
     }
 
     @Override
