@@ -55,13 +55,14 @@ public class Server extends Node {
                         statusMessage.send(socket);
 
                     } else if (message instanceof UnsubscribeMessage) {
-                        Topic currentTopic = this.topics.get(((UnsubscribeMessage) message).getTopic());
+                        String topicName = ((UnsubscribeMessage) message).getTopic();
+                        Topic currentTopic = this.topics.get(topicName);
 
                         String unsubId = message.getId();
 
                         StatusMessage statusMessage;
 
-                        if (!this.subscribers.containsKey(unsubId)) {
+                        if (!this.topics.containsKey(topicName)) {
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
                         } else if (!this.subscribers.get(unsubId).containsTopic(currentTopic)) {
                             statusMessage = new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_UNSUBSCRIBED);
