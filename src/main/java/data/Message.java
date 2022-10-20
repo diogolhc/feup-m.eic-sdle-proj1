@@ -1,5 +1,9 @@
 package data;
 
+import data.persistent.PersistentStorage;
+
+import java.io.IOException;
+
 public class Message {
     private final int id;
     private final String content;

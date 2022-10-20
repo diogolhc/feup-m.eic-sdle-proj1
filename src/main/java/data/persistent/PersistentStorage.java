@@ -1,3 +1,5 @@
+package data.persistent;
+
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,7 +22,7 @@ public class PersistentStorage {
         }
     }
 
-    public void writeSync(String path, String content) throws IOException {
+    public void write(String path, String content) throws IOException {
         File file = new File(this.basePath + path);
 
         if (!file.exists()) {
@@ -32,7 +34,11 @@ public class PersistentStorage {
         fr.close();
     }
 
-    public String readSync(String path) throws IOException {
+    public String read(String path) throws IOException {
         return Files.readString(Paths.get(this.basePath + path));
+    }
+
+    public void delete(String s) {
+        // TODO
     }
 }

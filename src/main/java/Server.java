@@ -1,4 +1,5 @@
 import data.Message;
+import data.persistent.PersistentStorage;
 import data.Subscriber;
 import data.Topic;
 import org.zeromq.SocketType;
