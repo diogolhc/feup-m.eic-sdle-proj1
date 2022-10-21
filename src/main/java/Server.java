@@ -47,7 +47,8 @@ public class Server extends Node {
 
     public StatusMessage handleTopicMessage(TopicsMessage message) {
         if (!this.topics.containsKey(message.getTopic())) {
-            // TODO always create/load topic? or is WRONG_SERVER useful in some case?
+            // TODO always create topic? or is WRONG_SERVER useful in some case?
+            // TODO load all topics when server starts
             try {
                 this.topics.put(message.getTopic(), Topic.load(storage, message.getTopic()));
             } catch (IOException e) {
