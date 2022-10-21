@@ -1,7 +1,7 @@
-import data.Message;
-import data.persistent.PersistentStorage;
-import data.Subscriber;
-import data.Topic;
+import data.server.Message;
+import data.PersistentStorage;
+import data.server.Subscriber;
+import data.server.Topic;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
@@ -11,6 +11,7 @@ import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 import protocol.topics.*;
 
+import java.io.IOException;
 import java.util.*;
 
 public class Server extends Node {
@@ -19,7 +20,7 @@ public class Server extends Node {
 
     public Server(String address) {
         super(address);
-        this.storage = new PersistentStorage(address);
+        this.storage = new PersistentStorage(address.replace(":", "_"));
         this.topics = new HashMap<>();
     }
 
@@ -32,6 +33,7 @@ public class Server extends Node {
                 // receive request from client
                 byte[] reply = socket.recv(0);
                 ProtocolMessage message = (new MessageParser(reply)).getMessage();
+                System.out.println("Received " + message.getClass().getSimpleName());
                 if (message instanceof TopicsMessage) {
                     StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
                     // TODO respond status with server address or client address?
@@ -45,7 +47,14 @@ public class Server extends Node {
 
     public StatusMessage handleTopicMessage(TopicsMessage message) {
         if (!this.topics.containsKey(message.getTopic())) {
-            return new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
+            // TODO always create/load topic? or is WRONG_SERVER useful in some case?
+            try {
+                this.topics.put(message.getTopic(), Topic.load(storage, message.getTopic()));
+            } catch (IOException e) {
+                return new StatusMessage(this.getAddress(), ResponseStatus.INTERNAL_ERROR);
+            }
+
+            //return new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
         }
         String clientId = message.getId();
         Topic topic = this.topics.get(message.getTopic());
@@ -54,37 +63,41 @@ public class Server extends Node {
                 return new StatusMessage(this.getAddress(), ResponseStatus.ALREADY_SUBSCRIBED);
             }
 
-            topic.addSubscriber(clientId);
-            // TODO storage (might make sense to encapsulate this inside addSubscriber)
-            // storage.writeSync("subscribers.txt", subId + "\n");
+            try {
+                topic.addSubscriber(clientId);
+            } catch (Exception e) {
+                return new StatusMessage(this.getAddress(), ResponseStatus.INTERNAL_ERROR);
+            }
         } else if (message instanceof UnsubscribeMessage) {
             if (!topic.isSubscribed(clientId)) {
                 return new StatusMessage(this.getAddress(), ResponseStatus.NOT_SUBSCRIBED);
             }
 
-            topic.removeSubscriber(clientId);
-            // TODO storage (might make sense to encapsulate this inside addSubscriber)
-            // storage.writeSync("subscribers.txt", subId + "\n");
+            try {
+                topic.removeSubscriber(clientId);
+            } catch (Exception e) {
+                return new StatusMessage(this.getAddress(), ResponseStatus.INTERNAL_ERROR);
+            }
         } else if (message instanceof GetMessage) {
             if (!topic.isSubscribed(clientId)) {
                 return new StatusMessage(this.getAddress(), ResponseStatus.NOT_SUBSCRIBED);
             }
 
-            Message messageToGet = topic.getSubscriber(clientId).getMessage();
+            if (!topic.hasMessages(clientId)) {
+                return new StatusMessage(this.getAddress(), ResponseStatus.NO_MESSAGES);
+            }
 
-            // TODO storage (might make sense to encapsulate file writes)
+            Message messageToGet = topic.getMessage(clientId);
             return new StatusMessage(this.getAddress(), ResponseStatus.OK, messageToGet.getContent());
         } else if (message instanceof PutMessage) {
-            Message messageToPut = new Message(topic.useCounter(), message.getBody());
-
-            // TODO storage (might make sense to encapsulate useCounter and file writes)
-            //storage.writeSync("topics/" + topic.getName() + "/counter.txt",
-            //        topic.getCounter().toString());
-            //storage.writeSync("topics/" + topic.getName() + "/" + messageToPut.getId() + ".txt",
-            //        message.getBody() + "\n");
-
-            for (Subscriber subscriber: topic.getSubscribers()) {
-                subscriber.putMessage(messageToPut);
+            try {
+                // TODO if no subscribers, NOOP? probably not, since there may be subscribers and this is the wrong server
+                //      but still, we need some kind of 'garbage collection' or 'reference counting' for messages
+                //      so that we don't store messages forever once everyone read them
+                //      or maybe yes, since that would be easier and its a rare case that we don't need to take into account
+                topic.putMessage(message.getBody());
+            } catch (Exception e) {
+                return new StatusMessage(this.getAddress(), ResponseStatus.INTERNAL_ERROR);
             }
         }
 

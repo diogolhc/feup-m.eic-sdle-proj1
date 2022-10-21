@@ -35,7 +35,7 @@ public abstract class Node {
             return false;
         }
         try {
-            Integer.parseInt(ipPort[0]);
+            //Integer.parseInt(ipPort[0]);
             Integer.parseInt(ipPort[1]);
         } catch (NumberFormatException exception) {
             return false;

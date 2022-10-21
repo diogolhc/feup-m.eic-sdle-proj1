@@ -1,4 +1,4 @@
-import data.TopicServerMapping;
+import data.proxy.TopicServerMapping;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
@@ -39,6 +39,7 @@ public class Proxy extends Node {
                 // receive request from client
                 byte[] reply = socket.recv(0);
                 ProtocolMessage message = new MessageParser(reply).getMessage();
+                System.out.println("Received " + message.getClass().getSimpleName());
                 if (message instanceof TopicsMessage) {
                     this.dispatchTopicMessage(context, socket, (TopicsMessage) message);
                 } else {

@@ -28,6 +28,7 @@ public class Client extends Node {
     public StatusMessage send(ProtocolMessage message) {
         try (ZContext context = new ZContext()) {
             for (String proxy: this.proxies) {
+                System.out.println("sending...");
                 ZMQ.Socket socket = context.createSocket(SocketType.REQ);
                 if (!socket.connect("tcp://" + proxy)) {
                     System.out.println("Could not connect to " + proxy + ".");
@@ -37,6 +38,7 @@ public class Client extends Node {
                 message.send(socket);
 
                 ProtocolMessage response = new MessageParser(socket.recv(0)).getMessage();
+
                 if (response instanceof StatusMessage) {
                     return (StatusMessage) response;
                 } else {
