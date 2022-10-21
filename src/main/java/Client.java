@@ -164,11 +164,11 @@ public class Client extends Node {
 
         Client client = new Client(args[1], proxies);
         switch (operation) {
-            case "put" -> client.put(topic, message);
-            case "get" -> client.get(topic);
-            case "subscribe" -> client.subscribe(topic);
-            case "unsubscribe" -> client.unsubscribe(topic);
-            default -> printUsage();
+            case "put": client.put(topic, message); break;
+            case "get": client.get(topic); break;
+            case "subscribe": client.subscribe(topic); break;
+            case "unsubscribe": client.unsubscribe(topic); break;
+            default: printUsage();
         }
     }
 }
