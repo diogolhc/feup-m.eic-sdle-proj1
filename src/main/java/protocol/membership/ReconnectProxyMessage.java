@@ -1,5 +1,5 @@
 package protocol.membership;
 
 public class ReconnectProxyMessage {
-    // TODO?
+    // TODO? should the proxy when starting tell the other proxies? not...
 }

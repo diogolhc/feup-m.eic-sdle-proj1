@@ -123,5 +123,6 @@ public class Server extends Node {
 
         Server server = new Server(args[0]);
         server.listen();
+        // TODO thread que periodicamente envia uma PeriodicServerMessage a cada proxy
     }
 }

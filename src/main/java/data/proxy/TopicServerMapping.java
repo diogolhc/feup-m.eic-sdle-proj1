@@ -33,6 +33,7 @@ public class TopicServerMapping {
         }
 
         if (serverIdLess == null) {
+            // TODO Throw checked exception para o proxy dizer ao cliente
             throw new RuntimeException("Proxy can't find any server.");
         }
 

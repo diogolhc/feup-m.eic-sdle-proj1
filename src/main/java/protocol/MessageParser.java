@@ -65,7 +65,7 @@ public class MessageParser {
                 break;
             case PeriodicServerMessage.TYPE:
                 if (headerFields.length == 2 && bodyMessage != null) {
-                    return new PeriodicServerMessage(headerFields[1], Arrays.asList(bodyMessage.split(",").clone()));
+                    return new PeriodicServerMessage(headerFields[1], Arrays.asList(bodyMessage.split(" ").clone()));
                 }
                 break;
         }
