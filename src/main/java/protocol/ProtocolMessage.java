@@ -37,7 +37,6 @@ public abstract class ProtocolMessage {
         sb.append("\r\n\r\n");
         if (this.getBody() != null) {
             sb.append(this.getBody());
-            sb.append("\r\n"); // TODO maybe remove this \r\n at the end of body
         }
         return sb.toString();
     }

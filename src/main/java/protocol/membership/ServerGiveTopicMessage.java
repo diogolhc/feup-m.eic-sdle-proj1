@@ -1,5 +1,13 @@
 package protocol.membership;
 
+import data.server.Message;
+import data.server.Subscriber;
+import protocol.ProtocolMessage;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 /*
 127.0.0.1:8051 1 3 4 5
 127.0.0.1:8052 1 3 4 5
@@ -14,10 +22,60 @@ fgsg
 *4
 fagagoajivs0ivjsgjr0gvskrg
  */
-// \s == *
-// TODO messageid only? or id + message
-// TODO body stuffing só aqui
-// GIVE_TOPIC <ID> <TOPIC> CRLF CRLF [[<sub1.getString()> CRLF ...] [/ID CRLF CONTEUDO ...]] CRLF
-public class ServerGiveTopicMessage {
+// /s == *
 
+// GIVE_TOPIC <ID> <TOPIC> CRLF CRLF [[<sub1.getString()> CRLF ...] [*ID CRLF CONTENT ...]]
+public class ServerGiveTopicMessage extends ProtocolMessage {
+    public final static String TYPE = "GIVE_TOPIC";
+
+    private final List<Subscriber> subscribers;
+
+    public List<Subscriber> getSubscribers() {
+        return subscribers;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
+
+    private final String topic;
+
+    public ServerGiveTopicMessage(String id, String topic, List<Subscriber> subscribers) {
+        super(id);
+        this.topic = topic;
+        this.subscribers = subscribers;
+    }
+
+
+    @Override
+    public String getBody() { // with stuffing
+        StringBuilder sb = new StringBuilder();
+
+        Set<Message> messages = new HashSet<>();
+        for (Subscriber sub : subscribers) {
+            sb.append(sub).append("\r\n");
+            messages.addAll(sub.getMessages());
+        }
+
+        for (Message message : messages) {
+            sb.append("*").append(message.getId()).append("\r\n")
+              .append(message.getContent()
+                      .replace("/", "//")
+                      .replace("*", "/s")
+              ).append("\r\n");
+
+        }
+
+        return sb.toString();
+    }
+
+    @Override
+    public String getType() {
+        return TYPE;
+    }
+
+    @Override
+    public List<String> getHeaderFields() {
+        return List.of(topic);
+    }
 }

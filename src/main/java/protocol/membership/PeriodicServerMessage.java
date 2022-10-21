@@ -4,7 +4,7 @@ import protocol.ProtocolMessage;
 
 import java.util.List;
 
-// PERIODIC_SERVER <ID> CRLF CRLF [<topic1> ...] CRLF
+// PERIODIC_SERVER <ID> CRLF CRLF [<topic1> ...]
 public class PeriodicServerMessage extends ProtocolMessage {
     public final static String TYPE = "PERIODIC_SERVER";
 
@@ -17,7 +17,7 @@ public class PeriodicServerMessage extends ProtocolMessage {
 
     @Override
     public String getBody() {
-        return String.join(",", this.topics);
+        return String.join(" ", this.topics);
     }
 
     @Override
