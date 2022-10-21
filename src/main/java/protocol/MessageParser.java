@@ -124,18 +124,14 @@ public class MessageParser {
                     if (stuffedContent.charAt(j+1) == '/') {
                         j++;
                         content.append("/");
-                        System.out.print("/");
                     } else if (stuffedContent.charAt(j+1) == 's') {
                         j++;
                         content.append("*");
-                        System.out.print("*");
                     } // no else
                 } else {
                     content.append(stuffedContent.charAt(j));
-                    System.out.print(stuffedContent.charAt(j));
                 }
             }
-            System.out.println();
 
             messages.put(id, new Message(id, content.toString()));
         }

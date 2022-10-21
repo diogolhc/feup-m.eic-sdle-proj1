@@ -29,15 +29,6 @@ public class ServerGiveTopicMessage extends ProtocolMessage {
     public final static String TYPE = "GIVE_TOPIC";
 
     private final List<Subscriber> subscribers;
-
-    public List<Subscriber> getSubscribers() {
-        return subscribers;
-    }
-
-    public String getTopic() {
-        return topic;
-    }
-
     private final String topic;
 
     public ServerGiveTopicMessage(String id, String topic, List<Subscriber> subscribers) {
@@ -46,6 +37,13 @@ public class ServerGiveTopicMessage extends ProtocolMessage {
         this.subscribers = subscribers;
     }
 
+    public List<Subscriber> getSubscribers() {
+        return subscribers;
+    }
+
+    public String getTopic() {
+        return topic;
+    }
 
     @Override
     public String getBody() { // with stuffing
