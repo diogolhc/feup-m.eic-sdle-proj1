@@ -58,8 +58,7 @@ public class Proxy extends Node {
             ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
             // TODO try several times, or not?
             serverSocket.connect("tcp://" + serverToSend);
-            serverTopicConflictWarnMessage.send(serverSocket);
-            // TODO read response
+            serverTopicConflictWarnMessage.sendAngGetResponse(serverSocket);
         }
     }
 
@@ -76,6 +75,7 @@ public class Proxy extends Node {
                 this.dispatchTopicMessage(this.getContext(), socket, (TopicsMessage) message);
             } else if (message instanceof PeriodicServerMessage) {
                 this.updateServers((PeriodicServerMessage) message);
+                new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
             } else {
                 System.out.println("Unexpected client request.");
             }

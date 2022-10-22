@@ -6,6 +6,7 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
+import protocol.membership.ServerTopicConflictWarnMessage;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 import protocol.topics.*;
@@ -55,6 +56,9 @@ public class Server extends Node {
                 StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
                 //TODO respond status with server address or client address?
                 statusMessage.send(socket);
+            } else if (message instanceof ServerTopicConflictWarnMessage) {
+                new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
+                // TODO send topic to other server...
             } else {
                 System.out.println("Unexpected request.");
             }
@@ -124,7 +128,7 @@ public class Server extends Node {
         System.out.println("usage: java Server <IP>:<PORT>");
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         if (args.length != 1) {
             printUsage();
             return;

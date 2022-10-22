@@ -44,4 +44,14 @@ public abstract class ProtocolMessage {
     public void send(ZMQ.Socket socket) {
         socket.send(this.toString().getBytes(ZMQ.CHARSET), 0);
     }
+
+    public ProtocolMessage sendAngGetResponse(ZMQ.Socket socket) {
+        this.send(socket);
+        byte[] response = socket.recv(0);
+        if (response == null) {
+            return null;
+        } else {
+            return new MessageParser(response).getMessage();
+        }
+    }
 }
