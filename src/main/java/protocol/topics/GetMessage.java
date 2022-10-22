@@ -12,6 +12,8 @@ public class GetMessage extends TopicsMessage {
         this.counter = counter;
     }
 
+    public String getCounter() { return this.counter; }
+
     @Override
     public String getType() {
         return TYPE;

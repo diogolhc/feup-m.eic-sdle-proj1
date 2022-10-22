@@ -101,7 +101,9 @@ public class Server extends Node {
                 return new StatusMessage(this.getAddress(), ResponseStatus.NO_MESSAGES);
             }
 
-            Message messageToGet = topic.getMessage(clientId);
+            String lastCounter = ((GetMessage) message).getCounter();
+
+            Message messageToGet = topic.getMessage(clientId, lastCounter);
             return new StatusMessage(this.getAddress(), ResponseStatus.OK, messageToGet.getContent());
         } else if (message instanceof PutMessage) {
             try {
