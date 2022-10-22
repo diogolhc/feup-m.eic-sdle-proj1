@@ -18,3 +18,18 @@ dependencies {
 test {
     useJUnitPlatform()
 }
+
+task(client, dependsOn: 'classes', type: JavaExec) {
+    main = 'Client'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task(proxy, dependsOn: 'classes', type: JavaExec) {
+    main = 'Proxy'
+    classpath = sourceSets.main.runtimeClasspath
+}
+
+task(server, dependsOn: 'classes', type: JavaExec) {
+    main = 'Server'
+    classpath = sourceSets.main.runtimeClasspath
+}
