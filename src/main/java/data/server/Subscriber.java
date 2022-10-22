@@ -16,7 +16,7 @@ public class Subscriber {
     }
 
     public static Subscriber load(String data, Map<Integer, Message> messages) {
-        String[] subscriberData = data.split("\\s");
+        String[] subscriberData = data.split(" ");
         String subscriberId = subscriberData[0];
         Subscriber subscriber = new Subscriber(subscriberId);
 

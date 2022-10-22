@@ -156,7 +156,7 @@ public class Client extends Node {
     private void updateLastPutMessageClient() throws IOException {
         try (FileWriter writer = this.storage.write(this.TOPICS_LAST_MESSAGE_FILE)) {
             for (Map.Entry<String, Integer> entry : this.topicsMessagesCounter.entrySet()) {
-                writer.write(entry.getKey() + " " + Integer.toString(Integer.parseInt(entry.getKey())));
+                writer.write(entry.getKey() + " " + entry.getValue());
                 writer.write(System.lineSeparator());
             }
         }

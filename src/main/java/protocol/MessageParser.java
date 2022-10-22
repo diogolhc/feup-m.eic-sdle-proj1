@@ -32,11 +32,11 @@ public class MessageParser {
 
         if (bodyIndex == -1) {
             throw new RuntimeException("Tried to parse an invalid message: no CRLF CRLF.");
-        } else if (bodyIndex != this.message.length() - 2) {
-            bodyMessage = this.message.substring(bodyIndex + 2);
+        } else if (bodyIndex != this.message.length() - 4) {
+            bodyMessage = this.message.substring(bodyIndex + 4);
         }
 
-        String[] headerFields = this.message.substring(0, bodyIndex).split("\\s");
+        String[] headerFields = this.message.substring(0, bodyIndex).split(" ");
         if (headerFields.length < 1) {
             throw new RuntimeException("Tried to parse an invalid message: no header fields.");
         }
@@ -77,7 +77,7 @@ public class MessageParser {
                     if (bodyMessage == null) {
                         return new PeriodicServerMessage(headerFields[1], new HashSet<>());
                     } else {
-                        return new PeriodicServerMessage(headerFields[1], new HashSet<>(Arrays.asList(bodyMessage.split("\\s").clone())));
+                        return new PeriodicServerMessage(headerFields[1], new HashSet<>(Arrays.asList(bodyMessage.split(" ").clone())));
                     }
                 }
                 break;
@@ -149,7 +149,7 @@ public class MessageParser {
 
         List<Subscriber> subscribers = new LinkedList<>();
         for (String sub : subs) {
-            String[] subTokens = sub.split("\\s");
+            String[] subTokens = sub.split(" ");
             if (subTokens.length < 1) {
                 return null;
             }
