@@ -2,6 +2,7 @@ package protocol.topics;
 
 import protocol.ProtocolMessage;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public abstract class TopicsMessage extends ProtocolMessage {
@@ -18,6 +19,8 @@ public abstract class TopicsMessage extends ProtocolMessage {
 
     @Override
     public List<String> getHeaderFields() {
-        return List.of(this.topic);
+        List<String> fields = new LinkedList<>();
+        fields.add(this.topic);
+        return fields;
     }
 }

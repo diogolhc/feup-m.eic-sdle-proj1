@@ -44,7 +44,7 @@ public class Proxy extends Node {
             String topicConflict = entry.getKey();
             String serverConflict = entry.getValue();
 
-            String serverToSend = null;
+            String serverToSend;
             ServerTopicConflictWarnMessage serverTopicConflictWarnMessage;
             if (serverConflict.compareTo(message.getId()) < 0) {
                 serverTopicConflictWarnMessage = new ServerTopicConflictWarnMessage(this.getAddress(), topicConflict, message.getId());
