@@ -1,3 +1,4 @@
+import data.PersistentStorage;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
@@ -18,11 +19,12 @@ import java.util.Objects;
 
 public class Client extends Node {
     private final List<String> proxies;
-
+    private final PersistentStorage storage;
 
     public Client(ZContext context, String address, List<String> proxies) {
         super(context, address);
         this.proxies = proxies;
+        this.storage = new PersistentStorage(address.replace(":", "_"));
     }
 
     public StatusMessage send(ProtocolMessage message) {
@@ -60,6 +62,7 @@ public class Client extends Node {
             System.out.println("Message received from \"" + topic + "\".");
             System.out.println("==================================================");
             System.out.println(replyMessage.getBody());
+
         } else {
             System.out.println("Unknown server response: " + replyMessage.getStatus());
         }
