@@ -61,11 +61,12 @@ public class Client extends Node {
 
         ResponseStatus status = replyMessage.getStatus();
 
-        if (status.equals(ResponseStatus.OK) && replyMessage.getBody() != null) {
+        if (status.equals(ResponseStatus.OK) && replyMessage.getBody() != null && replyMessage.getCounter() != null) {
             System.out.println("Message received from \"" + topic + "\".");
             System.out.println("==================================================");
+            System.out.println(replyMessage.getCounter());
             System.out.println(replyMessage.getBody());
-
+            this.storage.write(topic + File.separator + LAST_ID_FILE, replyMessage.getCounter());
         } else {
             System.out.println("Unknown server response: " + replyMessage.getStatus());
         }

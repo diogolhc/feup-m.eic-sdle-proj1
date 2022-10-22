@@ -43,6 +43,8 @@ public class StatusMessage extends ProtocolMessage {
         return TYPE;
     }
 
+    public String getCounter() { return this.counter; }
+
     @Override
     public List<String> getHeaderFields() {
         List<String> headerList = new java.util.ArrayList<>(List.of(this.status.toString()));
