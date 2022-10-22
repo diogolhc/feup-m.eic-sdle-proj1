@@ -94,6 +94,9 @@ public class Client extends Node {
             System.out.println("==================================================");
             System.out.println(replyMessage.getCounter());
             System.out.println(replyMessage.getBody());
+            if (!storage.exists(topic + File.separator + LAST_ID_FILE)){
+                storage.makeDirectory(topic);
+            }
             this.storage.write(topic + File.separator + LAST_ID_FILE, replyMessage.getCounter());
         } else {
             System.out.println("Unknown server response: " + replyMessage.getStatus());
