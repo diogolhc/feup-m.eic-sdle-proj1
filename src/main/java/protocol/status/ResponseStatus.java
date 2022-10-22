@@ -4,7 +4,6 @@ public enum ResponseStatus {
     OK,
     ALREADY_SUBSCRIBED,
     NOT_SUBSCRIBED,
-    WRONG_SERVER,
     SERVER_UNAVAILABLE,
     INTERNAL_ERROR,
     NO_MESSAGES

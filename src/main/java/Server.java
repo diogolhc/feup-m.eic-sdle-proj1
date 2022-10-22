@@ -24,6 +24,18 @@ public class Server extends Node {
         this.topics = new HashMap<>();
     }
 
+    public void start() {
+        this.storage.listFiles().forEach(topic -> {
+            try {
+                this.topics.put(topic, Topic.load(this.storage, topic));
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException("Could not load topic " + topic + ".");
+            }
+        });
+        this.listen();
+    }
+
     public void listen() {
         try (ZContext context = new ZContext()) {
             ZMQ.Socket socket = context.createSocket(SocketType.REP);
@@ -47,15 +59,11 @@ public class Server extends Node {
 
     public StatusMessage handleTopicMessage(TopicsMessage message) {
         if (!this.topics.containsKey(message.getTopic())) {
-            // TODO always create topic? or is WRONG_SERVER useful in some case?
-            // TODO load all topics when server starts
             try {
                 this.topics.put(message.getTopic(), Topic.load(storage, message.getTopic()));
             } catch (IOException e) {
                 return new StatusMessage(this.getAddress(), ResponseStatus.INTERNAL_ERROR);
             }
-
-            //return new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
         }
         String clientId = message.getId();
         Topic topic = this.topics.get(message.getTopic());
@@ -122,6 +130,6 @@ public class Server extends Node {
         }
 
         Server server = new Server(args[0]);
-        server.listen();
+        server.start();
     }
 }

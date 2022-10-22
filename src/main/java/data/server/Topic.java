@@ -15,7 +15,7 @@ public class Topic {
     private final Map<String, Subscriber> subscribers;
     private Integer messageCounter;
 
-    public Topic(PersistentStorage storage, String name) {
+    private Topic(PersistentStorage storage, String name) {
         this.storage = storage;
         this.name = name;
         this.subscribers = new HashMap<>();
