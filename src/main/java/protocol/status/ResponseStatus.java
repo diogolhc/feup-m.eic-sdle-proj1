@@ -7,5 +7,6 @@ public enum ResponseStatus {
     WRONG_SERVER,
     SERVER_UNAVAILABLE,
     INTERNAL_ERROR,
-    NO_MESSAGES
+    NO_MESSAGES,
+    PROXY_DOES_NOT_KNOW_ANY_SERVER
 }
