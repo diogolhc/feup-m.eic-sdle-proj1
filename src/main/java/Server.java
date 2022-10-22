@@ -18,14 +18,29 @@ import java.util.*;
 public class Server extends Node {
     private final PersistentStorage storage;
     private final Map<String, Topic> topics;
+    private final List<String> proxies;
 
-    public Server(ZContext context, String address, List<String> proxies) throws IOException {
+    public Server(ZContext context, String address, List<String> proxies) {
         super(context, address);
         this.storage = new PersistentStorage(address.replace(":", "_"));
         this.topics = new HashMap<>();
+        this.proxies = proxies;
+    }
 
-        Thread serverPeriodicThread = new ServerPeriodicThread(context, address, proxies, topics);
+    public void start() {
+        for (String topic: this.storage.listFiles()) {
+            try {
+                this.topics.put(topic, Topic.load(this.storage, topic));
+            } catch (IOException e) {
+                e.printStackTrace();
+                throw new RuntimeException("Could not load topic " + topic + ".");
+            }
+        }
+
+        Thread serverPeriodicThread = new ServerPeriodicThread(this.getContext(), this.getAddress(), this.proxies, topics);
         serverPeriodicThread.start(); // TODO stop this thread (?)
+
+        this.listen();
     }
 
     public void listen() {
@@ -49,15 +64,11 @@ public class Server extends Node {
 
     public StatusMessage handleTopicMessage(TopicsMessage message) {
         if (!this.topics.containsKey(message.getTopic())) {
-            // TODO always create topic? or is WRONG_SERVER useful in some case?
-            // TODO load all topics when server starts
             try {
                 this.topics.put(message.getTopic(), Topic.load(storage, message.getTopic()));
             } catch (IOException e) {
                 return new StatusMessage(this.getAddress(), ResponseStatus.INTERNAL_ERROR);
             }
-
-            //return new StatusMessage(this.getAddress(), ResponseStatus.WRONG_SERVER);
         }
         String clientId = message.getId();
         Topic topic = this.topics.get(message.getTopic());
@@ -133,7 +144,7 @@ public class Server extends Node {
 
         try (ZContext context = new ZContext()) {
             Server server = new Server(context, args[0], proxies);
-            server.listen();
+            server.start();
         }
     }
 }
