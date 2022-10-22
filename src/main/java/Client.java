@@ -99,7 +99,7 @@ public class Client extends Node {
         }
     }
 
-    public void unsubscribe(String topic) {
+    public void unsubscribe(String topic) throws IOException {
         StatusMessage replyMessage = this.send(new UnsubscribeMessage(this.getAddress(), topic));
         if (replyMessage == null) return;
 
@@ -107,6 +107,7 @@ public class Client extends Node {
 
         if (status.equals(ResponseStatus.OK)) {
             System.out.println("Topic \"" + topic + "\" unsubscribed.");
+            this.storage.write(topic + File.separator + LAST_ID_FILE, "-1");
         } else if (status.equals(ResponseStatus.NOT_SUBSCRIBED)) {
             System.out.println("Topic \"" + topic + "\" already unsubscribed.");
         } else {
