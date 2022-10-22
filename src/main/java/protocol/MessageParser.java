@@ -3,7 +3,6 @@ package protocol;
 import data.server.Message;
 import data.server.Subscriber;
 import org.zeromq.ZMQ;
-import protocol.membership.ConnectServerMessage;
 import protocol.membership.PeriodicServerMessage;
 import protocol.membership.ServerGiveTopicMessage;
 import protocol.topics.GetMessage;
@@ -72,17 +71,12 @@ public class MessageParser {
                     return new UnsubscribeMessage(headerFields[1], headerFields[2]);
                 }
                 break;
-            case ConnectServerMessage.TYPE:
-                if (headerFields.length == 2) {
-                    return new ConnectServerMessage(headerFields[1]);
-                }
-                break;
             case PeriodicServerMessage.TYPE:
                 if (headerFields.length == 2) {
                     if (bodyMessage == null) {
-                        return new PeriodicServerMessage(headerFields[1], new ArrayList<>());
+                        return new PeriodicServerMessage(headerFields[1], new HashSet<>());
                     } else {
-                        return new PeriodicServerMessage(headerFields[1], Arrays.asList(bodyMessage.split(" ").clone()));
+                        return new PeriodicServerMessage(headerFields[1], new HashSet<>(Arrays.asList(bodyMessage.split(" ").clone())));
                     }
                 }
                 break;

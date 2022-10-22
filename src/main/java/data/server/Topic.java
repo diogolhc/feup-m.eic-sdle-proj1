@@ -25,6 +25,10 @@ public class Topic {
         this.clientMessagePutCounter = new HashMap<>();
     }
 
+    public String getName() {
+        return this.name;
+    }
+
     public static Topic load(PersistentStorage storage, String name) throws IOException {
         Topic topic = new Topic(storage, name);
 

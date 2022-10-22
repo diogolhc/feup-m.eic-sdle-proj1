@@ -23,37 +23,35 @@ public class Client extends Node {
     private final Map<String, Integer> topicsMessagesCounter;
 
 
-    public Client(String address, List<String> proxies) {
-        super(address);
+    public Client(ZContext context, String address, List<String> proxies) {
+        super(context, address);
         this.proxies = proxies;
         this.topicsMessagesCounter = new HashMap<>();
     }
 
     public StatusMessage send(ProtocolMessage message) {
-        try (ZContext context = new ZContext()) {
-            for (String proxy: this.proxies) {
-                System.out.println("sending...");
-                ZMQ.Socket socket = context.createSocket(SocketType.REQ);
-                if (!socket.connect("tcp://" + proxy)) {
-                    System.out.println("Could not connect to " + proxy + ".");
-                    continue;
-                }
-
-                message.send(socket);
-
-                ProtocolMessage response = new MessageParser(socket.recv(0)).getMessage();
-
-                if (response instanceof StatusMessage) {
-                    return (StatusMessage) response;
-                } else {
-                    System.out.println("Unexpected server response.");
-                    return null;
-                }
+        for (String proxy: this.proxies) {
+            System.out.println("sending...");
+            ZMQ.Socket socket = this.getContext().createSocket(SocketType.REQ);
+            if (!socket.connect("tcp://" + proxy)) {
+                System.out.println("Could not connect to " + proxy + ".");
+                continue;
             }
 
-            System.out.println("Connection failed.");
-            return null;
+            message.send(socket);
+
+            ProtocolMessage response = new MessageParser(socket.recv(0)).getMessage();
+
+            if (response instanceof StatusMessage) {
+                return (StatusMessage) response;
+            } else {
+                System.out.println("Unexpected server response.");
+                return null;
+            }
         }
+
+        System.out.println("Connection failed.");
+        return null;
     }
 
     public void get(String topic) {
@@ -168,13 +166,16 @@ public class Client extends Node {
             return;
         }
 
-        Client client = new Client(args[1], proxies);
-        switch (operation) {
-            case "put": client.put(topic, message); break;
-            case "get": client.get(topic); break;
-            case "subscribe": client.subscribe(topic); break;
-            case "unsubscribe": client.unsubscribe(topic); break;
-            default: printUsage();
+        // TODO timeouts on requests?
+        try (ZContext context = new ZContext()) {
+            Client client = new Client(context, args[1], proxies);
+            switch (operation) {
+                case "put": client.put(topic, message); break;
+                case "get": client.get(topic); break;
+                case "subscribe": client.subscribe(topic); break;
+                case "unsubscribe": client.unsubscribe(topic); break;
+                default: printUsage();
+            }
         }
     }
 }

@@ -2,10 +2,7 @@ package data.proxy;
 
 import exceptions.proxy.ProxyDoesNotKnowAnyServerException;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class TopicServerMapping {
     // topic -> serverId
@@ -51,6 +48,23 @@ public class TopicServerMapping {
         }
 
         return serverId;
+    }
+
+    public Map<String, String> updateServers(String serverId, Set<String> topics) {
+        // topic -> server (!= serverId)
+        Map<String, String> serversWithSameTopic = new HashMap<>();
+
+        this.topicsPerServer.put(serverId, topics);
+        for (String topic : topics) {
+            String topicLocation = topicsLocations.get(topic);
+            if (topicLocation == null) {
+                this.topicsLocations.put(topic, serverId);
+            } else {
+                serversWithSameTopic.put(topic, topicLocation);
+            }
+        }
+
+        return serversWithSameTopic;
     }
 
 }
