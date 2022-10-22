@@ -9,6 +9,7 @@ import java.util.*;
 
 public class Topic {
     public static final String SUBSCRIBERS_FILE = "subscribers";
+    public static final String PUBLISHERS_FILE = "publishers";
 
     private final PersistentStorage storage;
     private final String name;
@@ -34,7 +35,7 @@ public class Topic {
 
         storage.makeDirectory(name, Message.MESSAGES_FOLDER);
         Map<Integer, Message> messages = new HashMap<>();
-        for (String messageFile: storage.listFiles(name, Message.MESSAGES_FOLDER)) {
+        for (String messageFile : storage.listFiles(name, Message.MESSAGES_FOLDER)) {
             int messageId = Integer.parseInt(messageFile);
             Message message = Message.load(storage, name, messageId);
             if (messageId > topic.messageCounter) {
@@ -44,27 +45,51 @@ public class Topic {
         }
 
         topic.loadSubscribers(messages);
+        topic.loadPublishersLastMessage(messages);
 
         return topic;
     }
 
     private void loadSubscribers(Map<Integer, Message> messages) throws IOException {
         if (!this.storage.exists(this.name, SUBSCRIBERS_FILE)) {
-            this.storage.write(this.name + File.pathSeparator + SUBSCRIBERS_FILE, "");
+            this.storage.write(this.name + File.separator + SUBSCRIBERS_FILE, "");
             return;
         }
 
-        List<String> subscriberStrings = this.storage.readLines(this.name + File.pathSeparator + SUBSCRIBERS_FILE);
-        for (String subscriberString: subscriberStrings) {
+        List<String> subscriberStrings = this.storage.readLines(this.name + File.separator + SUBSCRIBERS_FILE);
+        for (String subscriberString : subscriberStrings) {
             Subscriber subscriber = Subscriber.load(subscriberString, messages);
             this.subscribers.put(subscriber.getId(), subscriber);
         }
     }
 
+    private void loadPublishersLastMessage(Map<Integer, Message> messages) throws IOException {
+        if (!this.storage.exists(this.name, PUBLISHERS_FILE)) {
+            this.storage.write(this.name + File.separator + PUBLISHERS_FILE, "");
+            return;
+        }
+
+        List<String> publisherStrings = this.storage.readLines(this.name + File.separator + PUBLISHERS_FILE);
+        for (String publisherString : publisherStrings) {
+            String[] publisherLines = publisherString.split(" ");
+            this.clientMessagePutCounter.put(publisherLines[0], Integer.valueOf(publisherLines[1]));
+        }
+    }
+
     private void updateSubscribers() throws IOException {
-        try (FileWriter writer = this.storage.write(this.name + File.pathSeparator + SUBSCRIBERS_FILE)) {
+        try (FileWriter writer = this.storage.write(this.name + File.separator + SUBSCRIBERS_FILE)) {
             for (Subscriber subscriber : this.subscribers.values()) {
                 writer.write(subscriber.toString());
+                writer.write(System.lineSeparator());
+            }
+        }
+    }
+
+    private void updateLastPutMessageClient() throws IOException {
+        try (FileWriter writer = this.storage.write(this.name + File.separator + PUBLISHERS_FILE)) {
+
+            for (Map.Entry<String, Integer> entry : this.clientMessagePutCounter.entrySet()) {
+                writer.write(entry.getKey() + " " + Integer.toString(Integer.parseInt(entry.getKey())));
                 writer.write(System.lineSeparator());
             }
         }
@@ -90,11 +115,11 @@ public class Topic {
         }
     }
 
-    public Message getMessage(String subscriberId) {
+    public Message getMessage(String subscriberId, String lastCounter) {
         // TODO this is not deleting the message from the subscriber because that should only be done when the subscriber confirms it
         //  received the message. As such, exactly once fault tolerance should be implemented for that.
         //  This is also not deleting the message from the topic because that should only be done when it has been deleted from all subscribers.
-        return this.subscribers.get(subscriberId).getMessage();
+        return this.subscribers.get(subscriberId).getMessage(lastCounter);
     }
 
     public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException {
@@ -104,16 +129,18 @@ public class Topic {
         Integer counter = this.clientMessagePutCounter.get(publisher);
         if (counter == null) {
             this.clientMessagePutCounter.put(publisher, publisherCounter);
+            this.updateLastPutMessageClient();
         } else {
             if (publisherCounter <= counter) {
                 // Repeated message
                 return;
             } else {
                 this.clientMessagePutCounter.replace(publisher, messageCounter);
+                this.updateLastPutMessageClient();
             }
         }
 
-        for (Subscriber subscriber: this.subscribers.values()) {
+        for (Subscriber subscriber : this.subscribers.values()) {
             subscriber.putMessage(message);
         }
 
@@ -127,7 +154,7 @@ public class Topic {
                 e.addSuppressed(e2);
             }
 
-            for (Subscriber subscriber: this.subscribers.values()) {
+            for (Subscriber subscriber : this.subscribers.values()) {
                 subscriber.undoMessage();
             }
 

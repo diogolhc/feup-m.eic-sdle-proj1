@@ -53,7 +53,7 @@ public class Server extends Node {
             System.out.println("Received " + message.getClass().getSimpleName() + " from " + message.getId());
             if (message instanceof TopicsMessage) {
                 StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
-                // TODO respond status with server address or client address?
+                //TODO respond status with server address or client address?
                 statusMessage.send(socket);
             } else {
                 System.out.println("Unexpected request.");
@@ -100,8 +100,10 @@ public class Server extends Node {
                 return new StatusMessage(this.getAddress(), ResponseStatus.NO_MESSAGES);
             }
 
-            Message messageToGet = topic.getMessage(clientId);
-            return new StatusMessage(this.getAddress(), ResponseStatus.OK, messageToGet.getContent());
+            String lastCounter = ((GetMessage) message).getCounter();
+            Message messageToGet = topic.getMessage(clientId, lastCounter);
+            String getMessageCounter = Integer.toString(messageToGet.getId());
+            return new StatusMessage(this.getAddress(), ResponseStatus.OK, getMessageCounter, messageToGet.getContent());
         } else if (message instanceof PutMessage) {
             try {
                 // TODO if no subscribers, NOOP? probably not, since there may be subscribers and this is the wrong server
