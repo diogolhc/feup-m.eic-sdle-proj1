@@ -72,7 +72,7 @@ public class Client extends Node {
     public void put(String topic, String message) {
         Integer counter = this.topicsMessagesCounter.merge(topic, 1, Integer::sum);
 
-        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, message, counter));
+        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, counter, message));
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();

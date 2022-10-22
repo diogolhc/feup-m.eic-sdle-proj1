@@ -33,9 +33,7 @@ public class MessageParser {
         String[] headerFields = headerAndBody[0].split(" ");
         if (headerFields.length < 1) throw new RuntimeException("Tried to parse an invalid message.");
 
-        String bodyMessage = headerAndBody.length >= 2 ? headerAndBody[1] : null;
-
-        String counterMessage = headerAndBody.length == 3 ? headerAndBody[2] : null;
+        String bodyMessage = headerAndBody.length == 2 ? headerAndBody[1] : null;
 
         switch (headerFields[0]) {
             case StatusMessage.TYPE:
@@ -49,14 +47,10 @@ public class MessageParser {
                 }
                 break;
             case PutMessage.TYPE:
-                if (counterMessage == null)
-                    throw new RuntimeException("Tried to parse an invalid message (missing put counter).");
-
                 try {
-                    Integer counter = Integer.parseInt(counterMessage);
-
-                    if (headerFields.length == 3 && bodyMessage != null) {
-                        return new PutMessage(headerFields[1], headerFields[2], bodyMessage, counter);
+                    Integer counter = Integer.parseInt(headerFields[3]);
+                    if (headerFields.length == 4 && bodyMessage != null) {
+                        return new PutMessage(headerFields[1], headerFields[2], counter, bodyMessage);
                     }
                 } catch (NumberFormatException e) {
                     throw new RuntimeException("Tried to parse an invalid message (put counter).");
