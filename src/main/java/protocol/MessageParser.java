@@ -43,8 +43,10 @@ public class MessageParser {
 
         switch (headerFields[0]) {
             case StatusMessage.TYPE:
-                if (headerFields.length == 3) {
-                    return new StatusMessage(headerFields[1], ResponseStatus.valueOf(headerFields[2]), bodyMessage);
+                if (headerFields.length == 3 && bodyMessage == null) {
+                    return new StatusMessage(headerFields[1], ResponseStatus.valueOf(headerFields[2]));
+                } else if (headerFields.length == 4 && bodyMessage != null) {
+                    return new StatusMessage(headerFields[1], ResponseStatus.valueOf(headerFields[2]), headerFields[3], bodyMessage);
                 }
                 break;
             case GetMessage.TYPE:

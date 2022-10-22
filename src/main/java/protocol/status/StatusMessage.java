@@ -10,13 +10,7 @@ public class StatusMessage extends ProtocolMessage {
 
     private final ResponseStatus status;
     private final String message;
-    private String counter = null;
-
-    public StatusMessage(String id, ResponseStatus status, String message) {
-        super(id);
-        this.status = status;
-        this.message = message;
-    }
+    private final String counter;
 
     public StatusMessage(String id, ResponseStatus status, String counter, String message) {
         super(id);
@@ -26,7 +20,7 @@ public class StatusMessage extends ProtocolMessage {
     }
 
     public StatusMessage(String id, ResponseStatus status) {
-        this(id, status, null);
+        this(id, status, null, null);
     }
 
     public ResponseStatus getStatus() {
