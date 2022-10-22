@@ -51,7 +51,7 @@ public class Server extends Node {
             // receive request from client
             byte[] reply = socket.recv(0);
             ProtocolMessage message = (new MessageParser(reply)).getMessage();
-            System.out.println("Received " + message.getClass().getSimpleName());
+            System.out.println("Received " + message.getClass().getSimpleName() + " from " + message.getId());
             if (message instanceof TopicsMessage) {
                 StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
                 // TODO respond status with server address or client address?

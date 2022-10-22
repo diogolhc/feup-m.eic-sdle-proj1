@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 
 
 public class ServerPeriodicThread extends Thread {
-    final static int PERIOD_MS = 1000;
+    final static int PERIOD_MS = 5000;
     private final ZContext context;
     private final String address;
     private final List<String> proxies;
@@ -29,7 +29,6 @@ public class ServerPeriodicThread extends Thread {
     public void run() {
         while (!Thread.currentThread().isInterrupted()) {
             for (String proxy: this.proxies) {
-                System.out.println("sending periodic...");
                 ZMQ.Socket socket = this.context.createSocket(SocketType.REQ);
                 if (!socket.connect("tcp://" + proxy)) {
                     System.out.println("Could not connect to " + proxy + ".");
@@ -37,7 +36,9 @@ public class ServerPeriodicThread extends Thread {
                 }
 
                 Set<String> topicsNames = topics.values().stream().map(Topic::getName).collect(Collectors.toSet());
-                new PeriodicServerMessage(this.address, topicsNames).send(socket);
+                PeriodicServerMessage message = new PeriodicServerMessage(this.address, topicsNames);
+                message.send(socket);
+                System.out.println("Sending " + message.getClass().getSimpleName() + " to " + proxy);
                 // no need to get response
             }
 
