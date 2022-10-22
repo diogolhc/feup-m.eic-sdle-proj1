@@ -52,11 +52,11 @@ public class Topic {
 
     private void loadSubscribers(Map<Integer, Message> messages) throws IOException {
         if (!this.storage.exists(this.name, SUBSCRIBERS_FILE)) {
-            this.storage.write(this.name + File.pathSeparator + SUBSCRIBERS_FILE, "");
+            this.storage.write(this.name + File.separator + SUBSCRIBERS_FILE, "");
             return;
         }
 
-        List<String> subscriberStrings = this.storage.readLines(this.name + File.pathSeparator + SUBSCRIBERS_FILE);
+        List<String> subscriberStrings = this.storage.readLines(this.name + File.separator + SUBSCRIBERS_FILE);
         for (String subscriberString : subscriberStrings) {
             Subscriber subscriber = Subscriber.load(subscriberString, messages);
             this.subscribers.put(subscriber.getId(), subscriber);
@@ -65,11 +65,11 @@ public class Topic {
 
     private void loadPublishersLastMessage(Map<Integer, Message> messages) throws IOException {
         if (!this.storage.exists(this.name, PUBLISHERS_FILE)) {
-            this.storage.write(this.name + File.pathSeparator + PUBLISHERS_FILE, "");
+            this.storage.write(this.name + File.separator + PUBLISHERS_FILE, "");
             return;
         }
 
-        List<String> publisherStrings = this.storage.readLines(this.name + File.pathSeparator + PUBLISHERS_FILE);
+        List<String> publisherStrings = this.storage.readLines(this.name + File.separator + PUBLISHERS_FILE);
         for (String publisherString : publisherStrings) {
             String[] publisherLines = publisherString.split(" ");
             this.clientMessagePutCounter.put(publisherLines[0], Integer.valueOf(publisherLines[1]));
@@ -77,7 +77,7 @@ public class Topic {
     }
 
     private void updateSubscribers() throws IOException {
-        try (FileWriter writer = this.storage.write(this.name + File.pathSeparator + SUBSCRIBERS_FILE)) {
+        try (FileWriter writer = this.storage.write(this.name + File.separator + SUBSCRIBERS_FILE)) {
             for (Subscriber subscriber : this.subscribers.values()) {
                 writer.write(subscriber.toString());
                 writer.write(System.lineSeparator());
@@ -86,7 +86,7 @@ public class Topic {
     }
 
     private void updateLastPutMessageClient() throws IOException {
-        try (FileWriter writer = this.storage.write(this.name + File.pathSeparator + PUBLISHERS_FILE)) {
+        try (FileWriter writer = this.storage.write(this.name + File.separator + PUBLISHERS_FILE)) {
 
             for (Map.Entry<String, Integer> entry : this.clientMessagePutCounter.entrySet()) {
                 writer.write(entry.getKey() + " " + Integer.toString(Integer.parseInt(entry.getKey())));
