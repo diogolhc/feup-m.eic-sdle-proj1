@@ -5,6 +5,7 @@ import data.server.Subscriber;
 import org.zeromq.ZMQ;
 import protocol.membership.PeriodicServerMessage;
 import protocol.membership.ServerGiveTopicMessage;
+import protocol.membership.ServerTopicConflictWarnMessage;
 import protocol.topics.GetMessage;
 import protocol.topics.PutMessage;
 import protocol.topics.SubscribeMessage;
@@ -73,6 +74,11 @@ public class MessageParser {
                 ServerGiveTopicMessage serverGiveTopicMessage = parseServerGiveTopicMessage(headerFields, bodyMessage);
                 if (serverGiveTopicMessage != null) {
                     return serverGiveTopicMessage;
+                }
+                break;
+            case ServerTopicConflictWarnMessage.TYPE:
+                if (headerFields.length == 4) {
+                    return new ServerTopicConflictWarnMessage(headerFields[1], headerFields[2], headerFields[3]);
                 }
                 break;
         }

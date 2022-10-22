@@ -6,6 +6,7 @@ import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
 import protocol.membership.PeriodicServerMessage;
+import protocol.membership.ServerTopicConflictWarnMessage;
 import protocol.topics.*;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
@@ -42,8 +43,22 @@ public class Proxy extends Node {
         for (Map.Entry<String,String> entry : serversWithSameTopic.entrySet()) {
             String topicConflict = entry.getKey();
             String serverConflict = entry.getValue();
-            // TODO send messages to servers to make them consistent (send msg to lower id)
-            // message.getId() -> server who sent the message
+
+            String serverToSend = null;
+            ServerTopicConflictWarnMessage serverTopicConflictWarnMessage;
+            if (serverConflict.compareTo(message.getId()) < 0) {
+                serverTopicConflictWarnMessage = new ServerTopicConflictWarnMessage(this.getAddress(), topicConflict, message.getId());
+                serverToSend = serverConflict;
+            } else {
+                serverTopicConflictWarnMessage = new ServerTopicConflictWarnMessage(this.getAddress(), topicConflict, serverConflict);
+                serverToSend = message.getId();
+            }
+
+            // TODO do not create this socket (?) use one saved?
+            ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
+            // TODO try several times, or not?
+            serverSocket.connect("tcp://" + serverToSend);
+            serverTopicConflictWarnMessage.send(serverSocket);
         }
     }
 
