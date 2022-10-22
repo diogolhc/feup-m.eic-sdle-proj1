@@ -13,16 +13,20 @@ import protocol.status.StatusMessage;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 public class Client extends Node {
     private final List<String> proxies;
+    private final Map<String, Integer> topicsMessagesCounter;
 
 
     public Client(String address, List<String> proxies) {
         super(address);
         this.proxies = proxies;
+        this.topicsMessagesCounter = new HashMap<>();
     }
 
     public StatusMessage send(ProtocolMessage message) {
@@ -68,7 +72,9 @@ public class Client extends Node {
     }
 
     public void put(String topic, String message) {
-        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, message));
+        Integer counter = this.topicsMessagesCounter.merge(topic, 1, Integer::sum);
+
+        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, message, counter));
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
