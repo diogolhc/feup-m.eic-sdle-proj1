@@ -129,8 +129,13 @@ public class Client extends Node {
 
         if (status.equals(ResponseStatus.OK)) {
             System.out.println("Topic \"" + topic + "\" subscribed.");
+            storage.makeDirectory(topic);
             this.storage.write(topic + File.separator + LAST_ID_FILE, "-1");
         } else if (status.equals(ResponseStatus.ALREADY_SUBSCRIBED)) {
+            if (!storage.exists(topic + File.separator + LAST_ID_FILE)){
+                storage.makeDirectory(topic);
+                this.storage.write(topic + File.separator + LAST_ID_FILE, "-1");
+            }
             System.out.println("Topic \"" + topic + "\" already subscribed.");
         } else {
             System.out.println("Unknown server response: " + replyMessage.getStatus());
@@ -145,7 +150,6 @@ public class Client extends Node {
 
         if (status.equals(ResponseStatus.OK)) {
             System.out.println("Topic \"" + topic + "\" unsubscribed.");
-            this.storage.write(topic + File.separator + LAST_ID_FILE, "-1");
         } else if (status.equals(ResponseStatus.NOT_SUBSCRIBED)) {
             System.out.println("Topic \"" + topic + "\" already unsubscribed.");
         } else {
