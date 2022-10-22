@@ -1,4 +1,5 @@
 import data.proxy.TopicServerMapping;
+import exceptions.proxy.ProxyDoesNotKnowAnyServerException;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
@@ -17,17 +18,19 @@ public class Proxy extends Node {
     }
 
     public void dispatchTopicMessage(ZContext context, ZMQ.Socket clientSocket, TopicsMessage message) {
-        String serverId = this.topicServerMapping.getServer(message.getTopic());
-
-        ZMQ.Socket serverSocket = context.createSocket(SocketType.REQ);
-        if (!serverSocket.connect("tcp://" + serverId)) {
-            // TODO proxy address or client address?
-            new StatusMessage(this.getAddress(), ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
-            return;
+        try {
+            String serverId = this.topicServerMapping.getServer(message.getTopic());
+            ZMQ.Socket serverSocket = context.createSocket(SocketType.REQ);
+            if (!serverSocket.connect("tcp://" + serverId)) {
+                // TODO proxy address or client address?
+                new StatusMessage(this.getAddress(), ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
+                return;
+            }
+            message.send(serverSocket);
+            new MessageParser(serverSocket.recv(0)).getMessage().send(clientSocket); // TODO we could send it without even bothering to parse (more efficient) but is it worth it?
+        } catch (ProxyDoesNotKnowAnyServerException e) {
+            new StatusMessage(this.getAddress(), ResponseStatus.PROXY_DOES_NOT_KNOW_ANY_SERVER).send(clientSocket);
         }
-
-        message.send(serverSocket);
-        new MessageParser(serverSocket.recv(0)).getMessage().send(clientSocket); // TODO we could send it without even bothering to parse (more efficient) but is it worth it?
     }
 
     public void listen() {

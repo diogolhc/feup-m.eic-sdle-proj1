@@ -52,6 +52,11 @@ public class Subscriber {
         this.messages.removeLast();
     }
 
+    public Deque<Message> getMessages() {
+        return this.messages;
+    }
+
+    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(id).append(' ');

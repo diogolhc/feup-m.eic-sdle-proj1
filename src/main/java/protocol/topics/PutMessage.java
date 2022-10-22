@@ -1,6 +1,6 @@
 package protocol.topics;
 
-// PUT <ID> <TOPIC> CRLF CRLF <MESSAGE> CRLF
+// PUT <ID> <TOPIC> CRLF CRLF <MESSAGE>
 public class PutMessage extends TopicsMessage {
     public final static String TYPE = "PUT";
     private final String message;

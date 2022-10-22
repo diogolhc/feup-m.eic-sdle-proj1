@@ -123,6 +123,7 @@ public class Topic {
         return this.subscribers.get(clientId).hasMessages();
     }
 
+    @Override
     public String toString() {
         return this.name;
     }

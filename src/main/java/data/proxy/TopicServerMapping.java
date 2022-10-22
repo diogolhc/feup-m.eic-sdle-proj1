@@ -1,5 +1,7 @@
 package data.proxy;
 
+import exceptions.proxy.ProxyDoesNotKnowAnyServerException;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -21,7 +23,7 @@ public class TopicServerMapping {
         this.topicsPerServer.put(serverId, new HashSet<>());
     }
 
-    private String addTopic(String topic) {
+    private String addTopic(String topic) throws ProxyDoesNotKnowAnyServerException {
         String serverIdLess = null;
         int count = Integer.MAX_VALUE;
         for (Map.Entry<String, Set<String>> entry : this.topicsPerServer.entrySet()) {
@@ -33,7 +35,7 @@ public class TopicServerMapping {
         }
 
         if (serverIdLess == null) {
-            throw new RuntimeException("Proxy can't find any server.");
+            throw new ProxyDoesNotKnowAnyServerException("");
         }
 
         this.topicsLocations.put(topic, serverIdLess);
@@ -42,7 +44,7 @@ public class TopicServerMapping {
         return serverIdLess;
     }
 
-    public String getServer(String topic) {
+    public String getServer(String topic) throws ProxyDoesNotKnowAnyServerException {
         String serverId = this.topicsLocations.get(topic);
         if (serverId == null) {
             serverId = addTopic(topic);

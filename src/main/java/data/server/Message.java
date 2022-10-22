@@ -2,6 +2,7 @@ package data.server;
 
 import data.PersistentStorage;
 import java.io.IOException;
+import java.util.Objects;
 
 public class Message {
     public static final String MESSAGES_FOLDER = "messages/";
@@ -40,5 +41,18 @@ public class Message {
 
     public void delete(PersistentStorage storage, String topicPath) throws IOException {
         storage.delete(this.getPath(topicPath));
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Message message = (Message) o;
+        return id == message.id;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 }

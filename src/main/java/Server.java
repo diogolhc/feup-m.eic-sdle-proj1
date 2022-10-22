@@ -25,6 +25,7 @@ public class Server extends Node {
     }
 
     public void start() {
+        // TODO thread que periodicamente envia uma PeriodicServerMessage a cada proxy
         for (String topic: this.storage.listFiles()) {
             try {
                 this.topics.put(topic, Topic.load(this.storage, topic));
@@ -130,6 +131,7 @@ public class Server extends Node {
         }
 
         Server server = new Server(args[0]);
+
         server.start();
     }
 }
