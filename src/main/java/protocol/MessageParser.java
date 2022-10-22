@@ -172,28 +172,4 @@ public class MessageParser {
         return new ServerGiveTopicMessage(headerFields[1], headerFields[2], subscribers);
     }
 
-    // TODO this is just to test, remove once certain
-    public static void main(String[] args) {
-        List<Subscriber> subs = new LinkedList<>();
-
-        Subscriber s1 = new Subscriber("127.0.0.1:5002");
-        s1.putMessage(new Message(2, "mensagem2"));
-        s1.putMessage(new Message(3, "men/s/a*gem\r\n3213/"));
-        subs.add(s1);
-
-        Subscriber s2 = new Subscriber("127.0.0.1:5003");
-        s2.putMessage(new Message(2, "mensagem2"));
-        subs.add(s2);
-
-        ServerGiveTopicMessage m = new ServerGiveTopicMessage("127.0.0.1:5001", "cenas", subs);
-        ServerGiveTopicMessage pm = (ServerGiveTopicMessage) (new MessageParser(m.toString())).getMessage();
-        System.out.println(pm);
-        for (Subscriber sub : pm.getSubscribers()) {
-            System.out.println(sub.getId() + ":");
-            for (Message msg : sub.getMessages()) {
-                System.out.println(msg.getId() + " " + msg.getContent());
-            }
-        }
-    }
-
 }
