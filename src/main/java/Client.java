@@ -54,9 +54,9 @@ public class Client extends Node {
         return null;
     }
 
-    public void get(String topic) {
-        //TODO counter from state
-        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic, "-1"));
+    public void get(String topic) throws IOException {
+        String lastCounter = this.storage.read(topic + File.separator + LAST_ID_FILE);
+        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic, lastCounter));
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
