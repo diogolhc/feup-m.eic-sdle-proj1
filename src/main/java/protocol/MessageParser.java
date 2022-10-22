@@ -42,7 +42,7 @@ public class MessageParser {
                 break;
             case GetMessage.TYPE:
                 if (headerFields.length == 3) {
-                    return new GetMessage(headerFields[1], headerFields[2]);
+                    return new GetMessage(headerFields[1], headerFields[2], headerFields[3]);
                 }
                 break;
             case PutMessage.TYPE:

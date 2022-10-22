@@ -54,7 +54,7 @@ public class Server extends Node {
             System.out.println("Received " + message.getClass().getSimpleName() + " from " + message.getId());
             if (message instanceof TopicsMessage) {
                 StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
-                // TODO respond status with server address or client address?
+                //TODO respond status with server address or client address?
                 statusMessage.send(socket);
             } else {
                 System.out.println("Unexpected request.");

@@ -55,7 +55,8 @@ public class Client extends Node {
     }
 
     public void get(String topic) {
-        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic));
+        //TODO counter from state
+        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic, "-1"));
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
