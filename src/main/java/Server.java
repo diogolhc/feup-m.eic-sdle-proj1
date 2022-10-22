@@ -10,37 +10,39 @@ import protocol.ProtocolMessage;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 import protocol.topics.*;
+import threads.ServerPeriodicThread;
 
 import java.io.IOException;
 import java.util.*;
 
 public class Server extends Node {
-    private PersistentStorage storage;
+    private final PersistentStorage storage;
     private final Map<String, Topic> topics;
 
-    public Server(String address) {
-        super(address);
+    public Server(ZContext context, String address, List<String> proxies) throws IOException {
+        super(context, address);
         this.storage = new PersistentStorage(address.replace(":", "_"));
         this.topics = new HashMap<>();
+
+        Thread serverPeriodicThread = new ServerPeriodicThread(context, address, proxies, topics);
+        serverPeriodicThread.start(); // TODO stop this thread (?)
     }
 
     public void listen() {
-        try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REP);
-            socket.bind("tcp://*:" + this.getPort());
+        ZMQ.Socket socket = this.getContext().createSocket(SocketType.REP);
+        socket.bind("tcp://*:" + this.getPort());
 
-            while (!Thread.currentThread().isInterrupted()) {
-                // receive request from client
-                byte[] reply = socket.recv(0);
-                ProtocolMessage message = (new MessageParser(reply)).getMessage();
-                System.out.println("Received " + message.getClass().getSimpleName());
-                if (message instanceof TopicsMessage) {
-                    StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
-                    // TODO respond status with server address or client address?
-                    statusMessage.send(socket);
-                } else {
-                    System.out.println("Unexpected request.");
-                }
+        while (!Thread.currentThread().isInterrupted()) {
+            // receive request from client
+            byte[] reply = socket.recv(0);
+            ProtocolMessage message = (new MessageParser(reply)).getMessage();
+            System.out.println("Received " + message.getClass().getSimpleName());
+            if (message instanceof TopicsMessage) {
+                StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
+                // TODO respond status with server address or client address?
+                statusMessage.send(socket);
+            } else {
+                System.out.println("Unexpected request.");
             }
         }
     }
@@ -109,7 +111,7 @@ public class Server extends Node {
         System.out.println("usage: java Server <IP>:<PORT>");
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             printUsage();
             return;
@@ -121,8 +123,17 @@ public class Server extends Node {
             return;
         }
 
-        Server server = new Server(args[0]);
-        server.listen();
-        // TODO thread que periodicamente envia uma PeriodicServerMessage a cada proxy
+        List<String> proxies;
+        try {
+            proxies = Node.readProxyConfig();
+        } catch (IOException e) {
+            System.out.println("Failed to read proxy config: " + e.getMessage());
+            return;
+        }
+
+        try (ZContext context = new ZContext()) {
+            Server server = new Server(context, args[0], proxies);
+            server.listen();
+        }
     }
 }

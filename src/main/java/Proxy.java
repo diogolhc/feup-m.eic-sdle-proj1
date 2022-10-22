@@ -5,15 +5,18 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
+import protocol.membership.PeriodicServerMessage;
 import protocol.topics.*;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 
+import java.util.Map;
+
 public class Proxy extends Node {
     private final TopicServerMapping topicServerMapping;
 
-    public Proxy(String address) {
-        super(address);
+    public Proxy(ZContext context, String address) {
+        super(context, address);
         this.topicServerMapping = new TopicServerMapping();
     }
 
@@ -33,21 +36,32 @@ public class Proxy extends Node {
         }
     }
 
-    public void listen() {
-        try (ZContext context = new ZContext()) {
-            ZMQ.Socket socket = context.createSocket(SocketType.REP);
-            socket.bind("tcp://*:" + this.getPort());
+    public void updateServers(PeriodicServerMessage message) {
+        Map<String, String> serversWithSameTopic = this.topicServerMapping.updateServers(message.getId(), message.getTopics());
 
-            while (!Thread.currentThread().isInterrupted()) {
-                // receive request from client
-                byte[] reply = socket.recv(0);
-                ProtocolMessage message = new MessageParser(reply).getMessage();
-                System.out.println("Received " + message.getClass().getSimpleName());
-                if (message instanceof TopicsMessage) {
-                    this.dispatchTopicMessage(context, socket, (TopicsMessage) message);
-                } else {
-                    System.out.println("Unexpected client request.");
-                }
+        for (Map.Entry<String,String> entry : serversWithSameTopic.entrySet()) {
+            String topicConflict = entry.getKey();
+            String serverConflict = entry.getValue();
+            // TODO send messages to servers to make them consistent (send msg to lower id)
+            // message.getId() -> server who sent the message
+        }
+    }
+
+    public void listen() {
+        ZMQ.Socket socket = this.getContext().createSocket(SocketType.REP);
+        socket.bind("tcp://*:" + this.getPort());
+
+        while (!Thread.currentThread().isInterrupted()) {
+            // receive request from client
+            byte[] reply = socket.recv(0);
+            ProtocolMessage message = new MessageParser(reply).getMessage();
+            System.out.println("Received " + message.getClass().getSimpleName());
+            if (message instanceof TopicsMessage) {
+                this.dispatchTopicMessage(this.getContext(), socket, (TopicsMessage) message);
+            } else if (message instanceof PeriodicServerMessage) {
+                this.updateServers((PeriodicServerMessage) message);
+            } else {
+                System.out.println("Unexpected client request.");
             }
         }
     }
@@ -68,7 +82,9 @@ public class Proxy extends Node {
             return;
         }
 
-        Proxy proxy = new Proxy(args[0]);
-        proxy.listen();
+        try (ZContext context = new ZContext()) {
+            Proxy proxy = new Proxy(context, args[0]);
+            proxy.listen();
+        }
     }
 }

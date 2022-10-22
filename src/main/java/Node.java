@@ -1,3 +1,5 @@
+import org.zeromq.ZContext;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -10,23 +12,29 @@ public abstract class Node {
     public static final String PROXY_CONFIG_PATH = "./filesystems/proxy_config.txt";
     private final String ip;
     private final String port;
+    private final ZContext context;
 
-    public Node(String address) {
+    public Node(ZContext context, String address) {
         String[] parts = address.split(":");
         this.ip = parts[0];
         this.port = parts[1];
+        this.context = context;
     }
 
     public String getAddress() {
-        return ip + ":" + port;
+        return this.ip + ":" + this.port;
     }
 
     public String getIp() {
-        return ip;
+        return this.ip;
     }
 
     public String getPort() {
-        return port;
+        return this.port;
+    }
+
+    public ZContext getContext() {
+        return this.context;
     }
 
     public static boolean validateAddress(String address) {
