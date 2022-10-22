@@ -27,13 +27,19 @@ public class MessageParser {
     }
 
     public ProtocolMessage getMessage() {
-        String[] headerAndBody = this.message.split("\r\n\r\n");
-        if (headerAndBody.length < 1) throw new RuntimeException("Tried to parse an invalid message.");
+        String bodyMessage = null;
+        int bodyIndex = this.message.indexOf("\r\n\r\n");
 
-        String[] headerFields = headerAndBody[0].split(" ");
-        if (headerFields.length < 1) throw new RuntimeException("Tried to parse an invalid message.");
+        if (bodyIndex == -1) {
+            throw new RuntimeException("Tried to parse an invalid message: no CRLF CRLF.");
+        } else if (bodyIndex != this.message.length() - 2) {
+            bodyMessage = this.message.substring(bodyIndex + 2);
+        }
 
-        String bodyMessage = headerAndBody.length == 2 ? headerAndBody[1] : null;
+        String[] headerFields = this.message.substring(0, bodyIndex).split("\\s");
+        if (headerFields.length < 1) {
+            throw new RuntimeException("Tried to parse an invalid message: no header fields.");
+        }
 
         switch (headerFields[0]) {
             case StatusMessage.TYPE:
@@ -71,7 +77,7 @@ public class MessageParser {
                     if (bodyMessage == null) {
                         return new PeriodicServerMessage(headerFields[1], new HashSet<>());
                     } else {
-                        return new PeriodicServerMessage(headerFields[1], new HashSet<>(Arrays.asList(bodyMessage.split(" ").clone())));
+                        return new PeriodicServerMessage(headerFields[1], new HashSet<>(Arrays.asList(bodyMessage.split("\\s").clone())));
                     }
                 }
                 break;
@@ -88,7 +94,7 @@ public class MessageParser {
                 break;
         }
 
-        throw new RuntimeException("Tried to parse an invalid message.");
+        throw new RuntimeException("Tried to parse an invalid message of type: " + headerFields[0]);
     }
 
     private ServerGiveTopicMessage parseServerGiveTopicMessage(String[] headerFields, String bodyMessage) {
@@ -143,7 +149,7 @@ public class MessageParser {
 
         List<Subscriber> subscribers = new LinkedList<>();
         for (String sub : subs) {
-            String[] subTokens = sub.split(" ");
+            String[] subTokens = sub.split("\\s");
             if (subTokens.length < 1) {
                 return null;
             }

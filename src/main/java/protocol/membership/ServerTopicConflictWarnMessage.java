@@ -2,6 +2,9 @@ package protocol.membership;
 
 import protocol.ProtocolMessage;
 
+import java.util.LinkedList;
+import java.util.List;
+
 // TOPIC_CONFLICT <ID> <TOPIC> <SERVER_CONFLICT_ID> CRLF CRLF
 public class ServerTopicConflictWarnMessage extends ProtocolMessage {
     public final static String TYPE = "TOPIC_CONFLICT";
@@ -26,5 +29,13 @@ public class ServerTopicConflictWarnMessage extends ProtocolMessage {
     @Override
     public String getType() {
         return TYPE;
+    }
+
+    @Override
+    public List<String> getHeaderFields() {
+        List<String> headerFields = new LinkedList<>();
+        headerFields.add(this.topic);
+        headerFields.add(this.serverConflict);
+        return headerFields;
     }
 }
