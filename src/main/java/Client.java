@@ -83,7 +83,10 @@ public class Client extends Node {
     }
 
     public void get(String topic) throws IOException {
-        String lastCounter = this.storage.read(topic + File.separator + LAST_ID_FILE);
+        String lastCounter = "-1";
+        if (storage.exists(topic + File.separator + LAST_ID_FILE)){
+            lastCounter = this.storage.read(topic + File.separator + LAST_ID_FILE);
+        }
         StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic, lastCounter), -1);
         if (replyMessage == null) return;
 
