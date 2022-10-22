@@ -39,7 +39,7 @@ public class ServerPeriodicThread extends Thread {
                 PeriodicServerMessage message = new PeriodicServerMessage(this.address, topicsNames);
                 message.send(socket);
                 System.out.println("Sending " + message.getClass().getSimpleName() + " to " + proxy);
-                // no need to get response
+                // TODO read response
             }
 
             try {

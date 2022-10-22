@@ -59,6 +59,7 @@ public class Proxy extends Node {
             // TODO try several times, or not?
             serverSocket.connect("tcp://" + serverToSend);
             serverTopicConflictWarnMessage.send(serverSocket);
+            // TODO read response
         }
     }
 
