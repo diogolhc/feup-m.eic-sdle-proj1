@@ -25,14 +25,14 @@ public class Server extends Node {
     }
 
     public void start() {
-        this.storage.listFiles().forEach(topic -> {
+        for (String topic: this.storage.listFiles()) {
             try {
                 this.topics.put(topic, Topic.load(this.storage, topic));
             } catch (IOException e) {
                 e.printStackTrace();
                 throw new RuntimeException("Could not load topic " + topic + ".");
             }
-        });
+        }
         this.listen();
     }
 
