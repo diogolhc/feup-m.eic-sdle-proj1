@@ -89,7 +89,7 @@ public class Topic {
         try (FileWriter writer = this.storage.write(this.name + File.separator + PUBLISHERS_FILE)) {
 
             for (Map.Entry<String, Integer> entry : this.clientMessagePutCounter.entrySet()) {
-                writer.write(entry.getKey() + " " + Integer.toString(Integer.parseInt(entry.getKey())));
+                writer.write(entry.getKey() + " " + entry.getValue());
                 writer.write(System.lineSeparator());
             }
         }
