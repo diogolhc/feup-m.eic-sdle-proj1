@@ -40,10 +40,15 @@ public class Subscriber {
         this.messages.add(message);
     }
 
-    public Message getMessage(String lastCounter) {
+    public boolean repeatedLastCounter(String lastCounter) {
         if (lastCounter.equals(Integer.toString(this.messages.peek().getId()))) {
             this.messages.remove();
+            return true;
         }
+        return false;
+    }
+
+    public Message getMessage(String lastCounter) {
         return this.messages.peek();
     }
 

@@ -115,6 +115,10 @@ public class Topic {
         }
     }
 
+    public Boolean subscriberRepeatedLastCounter(String subscriberId, String lastCounter) {
+        return this.subscribers.get(subscriberId).repeatedLastCounter(lastCounter);
+    }
+
     public Message getMessage(String subscriberId, String lastCounter) {
         // TODO this is not deleting the message from the subscriber because that should only be done when the subscriber confirms it
         //  received the message. As such, exactly once fault tolerance should be implemented for that.

@@ -105,6 +105,13 @@ public class Server extends Node {
             }
 
             String lastCounter = ((GetMessage) message).getCounter();
+
+            if (topic.subscriberRepeatedLastCounter(clientId, lastCounter)){
+                if (!topic.hasMessages(clientId)) {
+                    return new StatusMessage(this.getAddress(), ResponseStatus.NO_MESSAGES);
+                }
+            }
+
             Message messageToGet = topic.getMessage(clientId, lastCounter);
             String getMessageCounter = Integer.toString(messageToGet.getId());
             return new StatusMessage(this.getAddress(), ResponseStatus.OK, getMessageCounter, messageToGet.getContent());
