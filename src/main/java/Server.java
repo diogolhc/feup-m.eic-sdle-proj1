@@ -1,6 +1,5 @@
 import data.server.Message;
 import data.PersistentStorage;
-import data.server.Subscriber;
 import data.server.Topic;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
@@ -111,7 +110,8 @@ public class Server extends Node {
                 //      but still, we need some kind of 'garbage collection' or 'reference counting' for messages
                 //      so that we don't store messages forever once everyone read them
                 //      or maybe yes, since that would be easier and its a rare case that we don't need to take into account
-                topic.putMessage(message.getBody());
+
+                topic.putMessage(message.getBody(), clientId, ((PutMessage) message).getCounter());
             } catch (Exception e) {
                 return new StatusMessage(this.getAddress(), ResponseStatus.INTERNAL_ERROR);
             }

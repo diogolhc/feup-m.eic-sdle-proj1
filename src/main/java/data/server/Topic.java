@@ -15,11 +15,14 @@ public class Topic {
     private final Map<String, Subscriber> subscribers;
     private Integer messageCounter;
 
+    private final Map<String, Integer> clientMessagePutCounter;
+
     private Topic(PersistentStorage storage, String name) {
         this.storage = storage;
         this.name = name;
         this.subscribers = new HashMap<>();
         this.messageCounter = 0;
+        this.clientMessagePutCounter = new HashMap<>();
     }
 
     public String getName() {
@@ -94,9 +97,22 @@ public class Topic {
         return this.subscribers.get(subscriberId).getMessage(lastCounter);
     }
 
-    public void putMessage(String content) throws IOException {
+    public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException {
         Message message = new Message(messageCounter, content);
         message.save(this.storage, this.name);
+
+        Integer counter = this.clientMessagePutCounter.get(publisher);
+        if (counter == null) {
+            this.clientMessagePutCounter.put(publisher, publisherCounter);
+        } else {
+            if (publisherCounter <= counter) {
+                // Repeated message
+                return;
+            } else {
+                this.clientMessagePutCounter.replace(publisher, messageCounter);
+            }
+        }
+
         for (Subscriber subscriber: this.subscribers.values()) {
             subscriber.putMessage(message);
         }

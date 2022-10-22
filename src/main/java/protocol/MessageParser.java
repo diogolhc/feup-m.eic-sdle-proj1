@@ -5,6 +5,7 @@ import data.server.Subscriber;
 import org.zeromq.ZMQ;
 import protocol.membership.PeriodicServerMessage;
 import protocol.membership.ServerGiveTopicMessage;
+import protocol.membership.ServerTopicConflictWarnMessage;
 import protocol.topics.GetMessage;
 import protocol.topics.PutMessage;
 import protocol.topics.SubscribeMessage;
@@ -46,8 +47,13 @@ public class MessageParser {
                 }
                 break;
             case PutMessage.TYPE:
-                if (headerFields.length == 3 && bodyMessage != null) {
-                    return new PutMessage(headerFields[1], headerFields[2], bodyMessage);
+                try {
+                    Integer counter = Integer.parseInt(headerFields[3]);
+                    if (headerFields.length == 4 && bodyMessage != null) {
+                        return new PutMessage(headerFields[1], headerFields[2], counter, bodyMessage);
+                    }
+                } catch (NumberFormatException e) {
+                    throw new RuntimeException("Tried to parse an invalid message (put counter).");
                 }
                 break;
             case SubscribeMessage.TYPE:
@@ -73,6 +79,11 @@ public class MessageParser {
                 ServerGiveTopicMessage serverGiveTopicMessage = parseServerGiveTopicMessage(headerFields, bodyMessage);
                 if (serverGiveTopicMessage != null) {
                     return serverGiveTopicMessage;
+                }
+                break;
+            case ServerTopicConflictWarnMessage.TYPE:
+                if (headerFields.length == 4) {
+                    return new ServerTopicConflictWarnMessage(headerFields[1], headerFields[2], headerFields[3]);
                 }
                 break;
         }
@@ -115,10 +126,10 @@ public class MessageParser {
                 if (stuffedContent.charAt(j) == '/') {
                     // no need to check if j+1 in string since its not possible
                     // to have an escape alone at the tail
-                    if (stuffedContent.charAt(j+1) == '/') {
+                    if (stuffedContent.charAt(j + 1) == '/') {
                         j++;
                         content.append("/");
-                    } else if (stuffedContent.charAt(j+1) == 's') {
+                    } else if (stuffedContent.charAt(j + 1) == 's') {
                         j++;
                         content.append("*");
                     } // no else
@@ -167,7 +178,7 @@ public class MessageParser {
         subs.add(s2);
 
         ServerGiveTopicMessage m = new ServerGiveTopicMessage("127.0.0.1:5001", "cenas", subs);
-        ServerGiveTopicMessage pm = (ServerGiveTopicMessage)(new MessageParser(m.toString())).getMessage();
+        ServerGiveTopicMessage pm = (ServerGiveTopicMessage) (new MessageParser(m.toString())).getMessage();
         System.out.println(pm);
         for (Subscriber sub : pm.getSubscribers()) {
             System.out.println(sub.getId() + ":");
