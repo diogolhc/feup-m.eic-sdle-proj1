@@ -2,6 +2,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -29,19 +30,25 @@ public abstract class Node {
     }
 
     public static boolean validateAddress(String address) {
-        // TODO validate with regex, the try catch is wrong
         String[] ipPort = address.split(":");
         if (ipPort.length != 2) {
             return false;
         }
         try {
-            //Integer.parseInt(ipPort[0]);
             Integer.parseInt(ipPort[1]);
-        } catch (NumberFormatException exception) {
+            String[] groups = ipPort[0].split("\\.");
+
+            if (groups.length != 4) {
+                return false;
+            }
+            return Arrays.stream(groups)
+                    .filter(s -> !(s.length() > 1 && s.startsWith("0")))
+                    .map(Integer::parseInt)
+                    .filter(i -> (i >= 0 && i <= 255))
+                    .count() == 4;
+        } catch (NumberFormatException e) {
             return false;
         }
-
-        return true;
     }
 
     public static List<String> readProxyConfig() throws IOException {
