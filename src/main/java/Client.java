@@ -10,8 +10,10 @@ import protocol.topics.SubscribeMessage;
 import protocol.topics.UnsubscribeMessage;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
+import threads.ServerPeriodicThread;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -22,9 +24,11 @@ import java.util.Objects;
 
 public class Client extends Node {
     public static final String LAST_ID_FILE = "last_id";
-    private final List<String> proxies;
-    private final PersistentStorage storage;
     private final Integer MAX_TRIES = 3;
+
+    public final String TOPICS_LAST_MESSAGE_FILE = "topics_last_message";
+    private final PersistentStorage storage;
+    private final List<String> proxies;
     private final Map<String, Integer> topicsMessagesCounter;
 
 
@@ -33,10 +37,11 @@ public class Client extends Node {
         this.proxies = proxies;
         this.storage = new PersistentStorage(address.replace(":", "_"));
         this.topicsMessagesCounter = new HashMap<>();
+        ;
     }
 
     public StatusMessage send(ProtocolMessage message, Integer timeout) {
-        for (String proxy: this.proxies) {
+        for (String proxy : this.proxies) {
             System.out.println("sending...");
             ZMQ.Socket socket = this.getContext().createSocket(SocketType.REQ);
             if (!socket.connect("tcp://" + proxy)) {
@@ -50,7 +55,7 @@ public class Client extends Node {
 
                 socket.setReceiveTimeOut(timeout);                  // timeout = 0    -> return immediately;
                 responseMessage = socket.recv(0);             //           -1    -> wait until response received;
-                                                                   //            else -> return on timeout.
+                //            else -> return on timeout.
                 if (responseMessage == null) {
                     System.out.println("Timeout. Try nr " + (i + 1));
                 } else {
@@ -97,7 +102,11 @@ public class Client extends Node {
 
     public void put(String topic, String message) {
         Integer counter = this.topicsMessagesCounter.merge(topic, 1, Integer::sum);
-
+        try {
+            this.updateLastPutMessageClient();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, counter, message), 100);
 
@@ -141,6 +150,36 @@ public class Client extends Node {
             System.out.println("Topic \"" + topic + "\" already unsubscribed.");
         } else {
             System.out.println("Unknown server response: " + replyMessage.getStatus());
+        }
+    }
+
+    private void updateLastPutMessageClient() throws IOException {
+        try (FileWriter writer = this.storage.write(this.TOPICS_LAST_MESSAGE_FILE)) {
+            for (Map.Entry<String, Integer> entry : this.topicsMessagesCounter.entrySet()) {
+                writer.write(entry.getKey() + " " + Integer.toString(Integer.parseInt(entry.getKey())));
+                writer.write(System.lineSeparator());
+            }
+        }
+    }
+
+    public void start() {
+        try {
+            this.loadTopicsLastMessage();
+        } catch (IOException e) {
+            throw new RuntimeException("Could not load topic topics_last_message file.");
+        }
+    }
+
+    private void loadTopicsLastMessage() throws IOException {
+        if (!this.storage.exists(this.TOPICS_LAST_MESSAGE_FILE)) {
+            this.storage.write(this.TOPICS_LAST_MESSAGE_FILE, "");
+            return;
+        }
+
+        List<String> topicsStrings = this.storage.readLines(this.TOPICS_LAST_MESSAGE_FILE);
+        for (String topicsString : topicsStrings) {
+            String[] topicLines = topicsString.split(" ");
+            this.topicsMessagesCounter.put(topicLines[0], Integer.valueOf(topicLines[1]));
         }
     }
 
@@ -199,12 +238,22 @@ public class Client extends Node {
         // TODO timeouts on requests?
         try (ZContext context = new ZContext()) {
             Client client = new Client(context, args[1], proxies);
+            client.start();
             switch (operation) {
-                case "put": client.put(topic, message); break;
-                case "get": client.get(topic); break;
-                case "subscribe": client.subscribe(topic); break;
-                case "unsubscribe": client.unsubscribe(topic); break;
-                default: printUsage();
+                case "put":
+                    client.put(topic, message);
+                    break;
+                case "get":
+                    client.get(topic);
+                    break;
+                case "subscribe":
+                    client.subscribe(topic);
+                    break;
+                case "unsubscribe":
+                    client.unsubscribe(topic);
+                    break;
+                default:
+                    printUsage();
             }
         } catch (IOException e) {
             throw new RuntimeException(e); //TODO deal with exception
