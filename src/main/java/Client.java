@@ -11,6 +11,7 @@ import protocol.topics.UnsubscribeMessage;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class Client extends Node {
+    public static final String LAST_ID_FILE = "last_id";
     private final List<String> proxies;
     private final PersistentStorage storage;
 
@@ -81,7 +83,7 @@ public class Client extends Node {
         }
     }
 
-    public void subscribe(String topic) {
+    public void subscribe(String topic) throws IOException {
         StatusMessage replyMessage = this.send(new SubscribeMessage(this.getAddress(), topic));
         if (replyMessage == null) return;
 
@@ -89,6 +91,7 @@ public class Client extends Node {
 
         if (status.equals(ResponseStatus.OK)) {
             System.out.println("Topic \"" + topic + "\" subscribed.");
+            this.storage.write(topic + File.separator + LAST_ID_FILE, "-1");
         } else if (status.equals(ResponseStatus.ALREADY_SUBSCRIBED)) {
             System.out.println("Topic \"" + topic + "\" already subscribed.");
         } else {
@@ -173,6 +176,8 @@ public class Client extends Node {
                 case "unsubscribe": client.unsubscribe(topic); break;
                 default: printUsage();
             }
+        } catch (IOException e) {
+            throw new RuntimeException(e); //TODO deal with exception
         }
     }
 }
