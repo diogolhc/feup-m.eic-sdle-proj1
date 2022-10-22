@@ -19,6 +19,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Client extends Node {
+    private final Integer MAX_TRIES = 3;
     private final List<String> proxies;
     private final Map<String, Integer> topicsMessagesCounter;
 
@@ -29,7 +30,7 @@ public class Client extends Node {
         this.topicsMessagesCounter = new HashMap<>();
     }
 
-    public StatusMessage send(ProtocolMessage message) {
+    public StatusMessage send(ProtocolMessage message, Integer timeout) {
         for (String proxy: this.proxies) {
             System.out.println("sending...");
             ZMQ.Socket socket = this.getContext().createSocket(SocketType.REQ);
@@ -38,9 +39,26 @@ public class Client extends Node {
                 continue;
             }
 
-            message.send(socket);
+            byte[] responseMessage = null;
+            for (int i = 0; i < MAX_TRIES; i++) {
+                message.send(socket);
 
-            ProtocolMessage response = new MessageParser(socket.recv(0)).getMessage();
+                socket.setReceiveTimeOut(timeout);                  // timeout = 0    -> return immediately;
+                responseMessage = socket.recv(0);             //           -1    -> wait until response received;
+                                                                   //            else -> return on timeout.
+                if (responseMessage == null) {
+                    System.out.println("Timeout. Try nr " + (i + 1));
+                } else {
+                    break;
+                }
+            }
+
+            if (responseMessage == null) {
+                System.out.println("Exceeded number of tries. Timeout. No response");
+                return null;
+            }
+
+            ProtocolMessage response = new MessageParser(responseMessage).getMessage();
 
             if (response instanceof StatusMessage) {
                 return (StatusMessage) response;
@@ -55,7 +73,7 @@ public class Client extends Node {
     }
 
     public void get(String topic) {
-        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic));
+        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic), -1);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -72,7 +90,7 @@ public class Client extends Node {
     public void put(String topic, String message) {
         Integer counter = this.topicsMessagesCounter.merge(topic, 1, Integer::sum);
 
-        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, message, counter));
+        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, message, counter), 100);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -85,7 +103,7 @@ public class Client extends Node {
     }
 
     public void subscribe(String topic) {
-        StatusMessage replyMessage = this.send(new SubscribeMessage(this.getAddress(), topic));
+        StatusMessage replyMessage = this.send(new SubscribeMessage(this.getAddress(), topic), -1);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -100,7 +118,7 @@ public class Client extends Node {
     }
 
     public void unsubscribe(String topic) {
-        StatusMessage replyMessage = this.send(new UnsubscribeMessage(this.getAddress(), topic));
+        StatusMessage replyMessage = this.send(new UnsubscribeMessage(this.getAddress(), topic), -1);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
