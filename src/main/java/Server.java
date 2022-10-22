@@ -102,9 +102,9 @@ public class Server extends Node {
             }
 
             String lastCounter = ((GetMessage) message).getCounter();
-
             Message messageToGet = topic.getMessage(clientId, lastCounter);
-            return new StatusMessage(this.getAddress(), ResponseStatus.OK, messageToGet.getContent());
+            String getMessageCounter = Integer.toString(messageToGet.getId());
+            return new StatusMessage(this.getAddress(), ResponseStatus.OK, getMessageCounter, messageToGet.getContent());
         } else if (message instanceof PutMessage) {
             try {
                 // TODO if no subscribers, NOOP? probably not, since there may be subscribers and this is the wrong server
