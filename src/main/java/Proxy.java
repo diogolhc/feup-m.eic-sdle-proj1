@@ -24,20 +24,20 @@ public class Proxy extends Node {
         this.topicServerMapping = new TopicServerMapping();
     }
 
-    public void dispatchTopicMessage(ZContext context, ZMQ.Socket clientSocket, TopicsMessage message) {
+    public void dispatchTopicMessage(ZMQ.Socket clientSocket, TopicsMessage message) {
         try {
             String serverId = this.topicServerMapping.getServer(message.getTopic());
-            ZMQ.Socket serverSocket = context.createSocket(SocketType.REQ);
+            ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
             if (!serverSocket.connect("tcp://" + serverId)) {
                 // TODO proxy address or client address?
                 new StatusMessage(this.getAddress(), ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
                 return;
             }
-            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(context, serverId, serverSocket, MAX_TRIES, TIMEOUT);
+            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverId, serverSocket, MAX_TRIES, TIMEOUT);
             if (response != null) {
                 response.send(clientSocket);
             }
-            // TODO we could send it without even bothering to parse (more efficient) but is it worth it?
+
         } catch (ProxyDoesNotKnowAnyServerException e) {
             new StatusMessage(this.getAddress(), ResponseStatus.PROXY_DOES_NOT_KNOW_ANY_SERVER).send(clientSocket);
         }
@@ -77,7 +77,7 @@ public class Proxy extends Node {
             ProtocolMessage message = new MessageParser(reply).getMessage();
             System.out.println("Received " + message.getClass().getSimpleName() + " from " + message.getId());
             if (message instanceof TopicsMessage) {
-                this.dispatchTopicMessage(this.getContext(), socket, (TopicsMessage) message);
+                this.dispatchTopicMessage(socket, (TopicsMessage) message);
             } else if (message instanceof PeriodicServerMessage) {
                 this.updateServers((PeriodicServerMessage) message);
                 new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
