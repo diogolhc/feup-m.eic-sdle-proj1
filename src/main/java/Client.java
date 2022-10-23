@@ -2,7 +2,6 @@ import data.PersistentStorage;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
-import protocol.MessageParser;
 import protocol.ProtocolMessage;
 import protocol.topics.GetMessage;
 import protocol.topics.PutMessage;
@@ -10,7 +9,6 @@ import protocol.topics.SubscribeMessage;
 import protocol.topics.UnsubscribeMessage;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
-import threads.ServerPeriodicThread;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -38,121 +36,30 @@ public class Client extends Node {
         this.storage = new PersistentStorage("client_" + address.replace(":", "_"));
         this.topicsMessagesCounter = new HashMap<>();
     }
-/*
+
     public StatusMessage send(ProtocolMessage message, Integer timeout) {
         for (String proxy : this.proxies) {
-            System.out.println("sending...");
+            System.out.println("sending to " + proxy + "...");
             ZMQ.Socket socket = this.getContext().createSocket(SocketType.REQ);
             if (!socket.connect("tcp://" + proxy)) {
                 System.out.println("Could not connect to " + proxy + ".");
                 continue;
             }
 
-            byte[] responseMessage = null;
-            for (int i = 0; i < MAX_TRIES; i++) {
-                message.send(socket);
-
-                socket.setReceiveTimeOut(timeout);                  // timeout = 0    -> return immediately;
-                responseMessage = socket.recv(0);             //           -1    -> wait until response received;
-                //            else -> return on timeout.
-                if (responseMessage == null) {
-                    System.out.println("Timeout. Try nr " + (i + 1));
-                } else {
-                    break;
-                }
-            }
-
-            if (responseMessage == null) {
-                System.out.println("Exceeded number of tries. Timeout. No response");
-                return null;
-            }
-
-            ProtocolMessage response = new MessageParser(responseMessage).getMessage();
-
-            if (response instanceof StatusMessage) {
+            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), proxy, socket, MAX_TRIES, timeout);
+            if (response instanceof StatusMessage)
                 return (StatusMessage) response;
-            } else {
-                System.out.println("Unexpected server response.");
-                return null;
-            }
-        }
-
-        System.out.println("Connection failed.");
-        return null;
-    }
-*/
-    public StatusMessage sendNEW(ProtocolMessage message, Integer timeout) {
-        for (String proxy : this.proxies) {
-            System.out.println("sending...");
-            ZMQ.Socket socket = this.getContext().createSocket(SocketType.REQ);
-            if (!socket.connect("tcp://" + proxy)) {
-                System.out.println("Could not connect to " + proxy + ".");
-                continue;
-            }
-
-            ZMQ.Poller poller = this.getContext().createPoller(1);
-            poller.register(socket, ZMQ.Poller.POLLIN);
-
-            int retriesLeft = MAX_TRIES;
-            while (retriesLeft > 0 && !Thread.currentThread().isInterrupted()) {
-                message.send(socket);
-
-                while (true) {
-                    //  Poll socket for a reply, with timeout
-                    int rc = poller.poll(timeout);
-                    if (rc == -1)
-                        break; //  Interrupted
-
-                    //  Here we process a server reply and exit our loop if the
-                    //  reply is valid. If we didn't a reply we close the client
-                    //  socket and resend the request. We try a number of times
-                    //  before finally abandoning:
-
-                    if (poller.pollin(0)) {
-                        //  We got a reply from the server
-                        String responseMessage = socket.recvStr();
-                        if (responseMessage == null)
-                            break; //  Interrupted
-
-                        ProtocolMessage response = new MessageParser(responseMessage).getMessage();
-                        if (response instanceof StatusMessage) {
-                            return (StatusMessage) response;
-                        } else {
-                            System.out.println("Unexpected server response.");
-                            return null;
-                        }
-                    } else if (--retriesLeft == 0) {
-                        System.out.println("Exceeded number of tries. Timeout. No response");
-                        return null;
-                    } else {
-                        System.out.println("No response from server, retrying");
-                        //  Old socket is confused; close it and open a new one
-                        poller.unregister(socket);
-                        this.getContext().destroySocket(socket);
-                        System.out.println("Reconnecting to server\n");
-                        socket = this.getContext().createSocket(SocketType.REQ);
-                        if (!socket.connect("tcp://" + proxy)) {
-                            System.out.println("Could not connect to " + proxy + ".");
-                            continue;
-                        }
-                        poller.register(socket, ZMQ.Poller.POLLIN);
-                        //  Send request again, on new socket
-                        message.send(socket);
-                    }
-                }
-            }
         }
         System.out.println("Connection failed.");
         return null;
     }
-
 
     public void get(String topic) throws IOException {
         String lastCounter = "-1";
         if (storage.exists(topic + File.separator + LAST_ID_FILE)) {
             lastCounter = this.storage.read(topic + File.separator + LAST_ID_FILE);
         }
-        StatusMessage replyMessage = this.sendNEW(new GetMessage(this.getAddress(), topic, lastCounter), 100);
+        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic, lastCounter), 1000);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -179,7 +86,7 @@ public class Client extends Node {
             throw new RuntimeException(e);
         }
 
-        StatusMessage replyMessage = this.sendNEW(new PutMessage(this.getAddress(), topic, counter, message), 100);
+        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, counter, message), 1000);
 
         if (replyMessage == null) return;
 
@@ -193,7 +100,7 @@ public class Client extends Node {
     }
 
     public void subscribe(String topic) throws IOException {
-        StatusMessage replyMessage = this.sendNEW(new SubscribeMessage(this.getAddress(), topic), -1);
+        StatusMessage replyMessage = this.send(new SubscribeMessage(this.getAddress(), topic), -1);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -214,7 +121,7 @@ public class Client extends Node {
     }
 
     public void unsubscribe(String topic) throws IOException {
-        StatusMessage replyMessage = this.sendNEW(new UnsubscribeMessage(this.getAddress(), topic), -1);
+        StatusMessage replyMessage = this.send(new UnsubscribeMessage(this.getAddress(), topic), -1);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();

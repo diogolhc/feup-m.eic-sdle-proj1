@@ -58,7 +58,7 @@ public class Proxy extends Node {
             ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
             // TODO try several times, or not?
             serverSocket.connect("tcp://" + serverToSend);
-            serverTopicConflictWarnMessage.sendAngGetResponse(serverSocket);
+            serverTopicConflictWarnMessage.sendAngGetResponseBlocking(serverSocket);
         }
     }
 
@@ -67,7 +67,7 @@ public class Proxy extends Node {
         socket.bind("tcp://*:" + this.getPort());
 
         while (!Thread.currentThread().isInterrupted()) {
-            // receive request from client
+            // receive request from client or periodic from server
             byte[] reply = socket.recv(0);
             ProtocolMessage message = new MessageParser(reply).getMessage();
             System.out.println("Received " + message.getClass().getSimpleName() + " from " + message.getId());
