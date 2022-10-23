@@ -167,7 +167,7 @@ public class Client extends Node {
         System.out.println("./gradlew client --args=\"<ID> subscribe <TOPIC>\"");
         System.out.println("./gradlew client --args=\"<ID> unsubscribe <TOPIC>\"");
         System.out.println("./gradlew client --args=\"<ID> put <TOPIC> MESSAGE_PATH\"");
-        System.out.println("./gradlew client --args=\"<ID> get <TOPIC>");
+        System.out.println("./gradlew client --args=\"<ID> get <TOPIC>\"");
     }
 
     public static void main(String[] args) {
