@@ -15,7 +15,7 @@ public abstract class Node {
     private final ZContext context;
 
     public Node(ZContext context, String address) {
-        if (address.contains(":")) {
+        if (validateAddress(address)) {
             String[] parts = address.split(":");
             this.ip = parts[0];
             this.port = parts[1];
