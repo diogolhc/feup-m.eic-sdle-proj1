@@ -24,7 +24,7 @@ import java.util.Objects;
 
 public class Client extends Node {
     public static final String LAST_ID_FILE = "last_id";
-    private final Integer MAX_TRIES = 3;
+    public static final Integer MAX_TRIES = 3;
 
     public final String TOPICS_LAST_MESSAGE_FILE = "topics_last_message";
     private final PersistentStorage storage;
@@ -37,9 +37,8 @@ public class Client extends Node {
         this.proxies = proxies;
         this.storage = new PersistentStorage("client_" + address.replace(":", "_"));
         this.topicsMessagesCounter = new HashMap<>();
-        ;
     }
-
+/*
     public StatusMessage send(ProtocolMessage message, Integer timeout) {
         for (String proxy : this.proxies) {
             System.out.println("sending...");
@@ -81,7 +80,7 @@ public class Client extends Node {
         System.out.println("Connection failed.");
         return null;
     }
-
+*/
     public StatusMessage sendNEW(ProtocolMessage message, Integer timeout) {
         for (String proxy : this.proxies) {
             System.out.println("sending...");
@@ -98,8 +97,7 @@ public class Client extends Node {
             while (retriesLeft > 0 && !Thread.currentThread().isInterrupted()) {
                 message.send(socket);
 
-                int expect_reply = 1;
-                while (expect_reply > 0) {
+                while (true) {
                     //  Poll socket for a reply, with timeout
                     int rc = poller.poll(timeout);
                     if (rc == -1)
@@ -111,8 +109,7 @@ public class Client extends Node {
                     //  before finally abandoning:
 
                     if (poller.pollin(0)) {
-                        //  We got a reply from the server, must match
-                        //  getSequence
+                        //  We got a reply from the server
                         String responseMessage = socket.recvStr();
                         if (responseMessage == null)
                             break; //  Interrupted
