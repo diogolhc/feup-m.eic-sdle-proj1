@@ -35,7 +35,7 @@ public class Client extends Node {
     public Client(ZContext context, String address, List<String> proxies) {
         super(context, address);
         this.proxies = proxies;
-        this.storage = new PersistentStorage(address.replace(":", "_"));
+        this.storage = new PersistentStorage("client_" + address.replace(":", "_"));
         this.topicsMessagesCounter = new HashMap<>();
         ;
     }
