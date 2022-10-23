@@ -15,7 +15,7 @@ import java.util.Map;
 
 public class Proxy extends Node {
     private static final Integer MAX_TRIES = 3;
-    private static final Integer TIMEOUT = 1000;
+    private static final Integer TIMEOUT_MS = 1000;
 
     private final TopicServerMapping topicServerMapping;
 
@@ -33,7 +33,7 @@ public class Proxy extends Node {
                 new StatusMessage(this.getAddress(), ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
                 return;
             }
-            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverId, serverSocket, MAX_TRIES, TIMEOUT);
+            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverId, serverSocket, MAX_TRIES, TIMEOUT_MS);
             if (response != null) {
                 response.send(clientSocket);
             }
@@ -63,7 +63,7 @@ public class Proxy extends Node {
             // TODO do not create this socket (?) use one saved?
             ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
             serverSocket.connect("tcp://" + serverToSend);
-            serverTopicConflictWarnMessage.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverToSend, serverSocket, MAX_TRIES, TIMEOUT);
+            serverTopicConflictWarnMessage.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverToSend, serverSocket, MAX_TRIES, TIMEOUT_MS);
         }
     }
 

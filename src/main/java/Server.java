@@ -1,11 +1,13 @@
 import data.server.Message;
 import data.PersistentStorage;
+import data.server.Subscriber;
 import data.server.Topic;
 import org.zeromq.SocketType;
 import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
+import protocol.membership.ServerGiveTopicMessage;
 import protocol.membership.ServerTopicConflictWarnMessage;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
@@ -58,9 +60,76 @@ public class Server extends Node {
                 statusMessage.send(socket);
             } else if (message instanceof ServerTopicConflictWarnMessage) {
                 new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
-                // TODO send topic to other server...
+                this.handleServerTopicConflict((ServerTopicConflictWarnMessage) message);
+            } else if (message instanceof ServerGiveTopicMessage) {
+                if (this.handleServerGiveTopicMessage((ServerGiveTopicMessage) message)) {
+                    new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
+                } else {
+                    new StatusMessage(this.getAddress(), ResponseStatus.TRANSFER_TOPIC_ERROR).send(socket);
+                }
             } else {
                 System.out.println("Unexpected request.");
+            }
+        }
+    }
+
+    // return true if server saved the changes successfully
+    private boolean handleServerGiveTopicMessage(ServerGiveTopicMessage message) {
+        Topic topic = this.topics.get(message.getTopic());
+        boolean addedNow = false;
+        if (topic == null) {
+            try {
+                topic = Topic.load(this.storage, message.getTopic());
+                this.topics.put(topic.getName(), topic);
+                addedNow = true;
+            } catch (IOException e) {
+                return false;
+            }
+        }
+
+        List<Subscriber> subscribers = message.getSubscribers();
+        try {
+            topic.addSubscribersFromTransfer(subscribers);
+        } catch (IOException e) {
+            if (addedNow) {
+                this.topics.remove(topic.getName());
+            }
+            return false;
+        }
+
+        return true;
+    }
+
+    public void handleServerTopicConflict(ServerTopicConflictWarnMessage message) {
+        String serverConflict = message.getServerConflict();
+        Topic topicConflict = this.topics.get(message.getTopic());
+        if (topicConflict == null) {
+            return;
+        }
+
+        System.out.println("transferring topic " + topicConflict.getName() + " to " + serverConflict + "...");
+        ZMQ.Socket socket = this.getContext().createSocket(SocketType.REQ);
+        if (!socket.connect("tcp://" + serverConflict)) {
+            System.out.println("Could not connect to " + serverConflict + " to transfer conflict topic.");
+            return;
+        }
+
+        ProtocolMessage response = new ServerGiveTopicMessage(this.getAddress(), topicConflict.getName(), topicConflict.getSubscribers())
+            .sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverConflict, socket, 1, -1);
+
+        if (response instanceof StatusMessage) {
+            StatusMessage statusMessage = (StatusMessage) response;
+
+            System.out.println("Received " + statusMessage.getStatus() + " from " + statusMessage.getId() + " when transferring topic.");
+            if (statusMessage.getStatus() == ResponseStatus.OK) {
+                Topic topicRemoved = this.topics.remove(topicConflict.getName());
+                if (topicRemoved != null) {
+                    try {
+                        topicRemoved.deleteFromPersistence();
+                    } catch (IOException e) {
+                        System.out.println("Error while deleting from memory the conflicted topic: " + topicConflict.getName());
+                    }
+                }
             }
         }
     }

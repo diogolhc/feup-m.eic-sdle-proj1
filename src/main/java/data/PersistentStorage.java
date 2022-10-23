@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 public class PersistentStorage {
@@ -64,5 +65,12 @@ public class PersistentStorage {
 
     public void delete(String path) throws IOException {
         Files.deleteIfExists(getPath(path));
+    }
+
+    public void deleteRecursively(String path) throws IOException {
+        Files.walk(getPath(path))
+                .sorted(Comparator.reverseOrder())
+                .map(Path::toFile)
+                .forEach(File::delete);
     }
 }
