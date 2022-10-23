@@ -118,8 +118,8 @@ public class Topic {
         return this.subscribers.get(subscriberId).getMessage(lastCounter);
     }
 
-    public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException {
-        Message message = new Message(publisher + "_" + publisherCounter, content);
+    public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException{
+        Message message = new Message(publisher.replace(":", "_") + "-" + publisherCounter, content);
         message.save(this.storage, this.name);
 
         Integer counter = this.clientMessagePutCounter.get(publisher);
@@ -152,7 +152,7 @@ public class Topic {
             for (Subscriber subscriber : this.subscribers.values()) {
                 subscriber.undoMessage();
             }
-
+            System.out.println("HERE 4");
             throw e;
         }
     }
