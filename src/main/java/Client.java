@@ -22,8 +22,8 @@ import java.util.Objects;
 
 public class Client extends Node {
     public static final String LAST_ID_FILE = "last_id";
-    public static final Integer MAX_TRIES = 3;
-    public static final Integer TIMEOUT = 1000;
+    private static final Integer MAX_TRIES = 3;
+    private static final Integer TIMEOUT = 1000;
 
     public final String TOPICS_LAST_MESSAGE_FILE = "topics_last_message";
     private final PersistentStorage storage;

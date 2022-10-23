@@ -14,6 +14,9 @@ import protocol.status.StatusMessage;
 import java.util.Map;
 
 public class Proxy extends Node {
+    private static final Integer MAX_TRIES = 3;
+    private static final Integer TIMEOUT = 1000;
+
     private final TopicServerMapping topicServerMapping;
 
     public Proxy(ZContext context, String address) {
@@ -30,8 +33,11 @@ public class Proxy extends Node {
                 new StatusMessage(this.getAddress(), ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
                 return;
             }
-            message.send(serverSocket);
-            new MessageParser(serverSocket.recv(0)).getMessage().send(clientSocket); // TODO we could send it without even bothering to parse (more efficient) but is it worth it?
+            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(context, serverId, serverSocket, MAX_TRIES, TIMEOUT);
+            if (response != null) {
+                response.send(clientSocket);
+            }
+            // TODO we could send it without even bothering to parse (more efficient) but is it worth it?
         } catch (ProxyDoesNotKnowAnyServerException e) {
             new StatusMessage(this.getAddress(), ResponseStatus.PROXY_DOES_NOT_KNOW_ANY_SERVER).send(clientSocket);
         }
@@ -56,9 +62,8 @@ public class Proxy extends Node {
 
             // TODO do not create this socket (?) use one saved?
             ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
-            // TODO try several times, or not?
             serverSocket.connect("tcp://" + serverToSend);
-            serverTopicConflictWarnMessage.sendAngGetResponseBlocking(serverSocket);
+            serverTopicConflictWarnMessage.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverToSend, serverSocket, MAX_TRIES, TIMEOUT);
         }
     }
 
