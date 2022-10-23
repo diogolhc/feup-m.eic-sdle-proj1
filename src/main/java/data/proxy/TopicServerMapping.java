@@ -28,6 +28,10 @@ public class TopicServerMapping {
             if (size < count) {
                 serverIdLess = entry.getKey();
                 count = size;
+            } else if (size == count) {
+                if (serverIdLess == null || entry.getKey().compareTo(serverIdLess) < 0) {
+                    serverIdLess = entry.getKey();
+                }
             }
         }
 
