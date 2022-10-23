@@ -120,7 +120,7 @@ public class Topic {
     }
 
     public Message getMessage(String subscriberId, String lastCounter) {
-       return this.subscribers.get(subscriberId).getMessage(lastCounter);
+        return this.subscribers.get(subscriberId).getMessage(lastCounter);
     }
 
     public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException {
@@ -136,7 +136,7 @@ public class Topic {
                 // Repeated message
                 return;
             } else {
-                this.clientMessagePutCounter.replace(publisher, messageCounter);
+                this.clientMessagePutCounter.replace(publisher, publisherCounter);
                 this.updateLastPutMessageClient();
             }
         }
