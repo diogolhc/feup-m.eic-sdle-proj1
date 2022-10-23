@@ -198,7 +198,7 @@ public class Server extends Node {
     }
 
     private static void printUsage() {
-        System.out.println("usage: java Server <IP>:<PORT>");
+        System.out.println("usage: ./gradlew server --args=\"<IP>:<PORT>\"");
     }
 
     public static void main(String[] args) {

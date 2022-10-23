@@ -86,7 +86,7 @@ public class Proxy extends Node {
     }
 
     private static void printUsage() {
-        System.out.println("usage: java Proxy <IP>:<PORT>");
+        System.out.println("usage: ./gradlew proxy --args=\"<IP>:<PORT>\"");
     }
 
     public static void main(String[] args) {
