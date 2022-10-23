@@ -107,6 +107,22 @@ public class Topic {
             this.subscribers = oldSubs;
             throw e;
         }
+
+        Set<Message> messages = new HashSet<>();
+        for (Subscriber subscriber: subscribers){
+            messages.addAll(subscriber.getMessages());
+        }
+
+        try {
+            for (Message message : messages) {
+                message.save(this.storage, this.name);
+            }
+        } catch (IOException e) {
+            for (Message message : messages) {
+                message.delete(this.storage, this.name);
+            }
+            throw e;
+        }
     }
 
     public void addSubscriber(String subscriberId) throws IOException {
@@ -171,7 +187,6 @@ public class Topic {
             for (Subscriber subscriber : this.subscribers.values()) {
                 subscriber.undoMessage();
             }
-            System.out.println("HERE 4");
             throw e;
         }
     }
