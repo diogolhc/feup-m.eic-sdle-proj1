@@ -82,12 +82,80 @@ public class Client extends Node {
         return null;
     }
 
+    public StatusMessage sendNEW(ProtocolMessage message, Integer timeout) {
+        for (String proxy : this.proxies) {
+            System.out.println("sending...");
+            ZMQ.Socket socket = this.getContext().createSocket(SocketType.REQ);
+            if (!socket.connect("tcp://" + proxy)) {
+                System.out.println("Could not connect to " + proxy + ".");
+                continue;
+            }
+
+            ZMQ.Poller poller = this.getContext().createPoller(1);
+            poller.register(socket, ZMQ.Poller.POLLIN);
+
+            int retriesLeft = MAX_TRIES;
+            while (retriesLeft > 0 && !Thread.currentThread().isInterrupted()) {
+                message.send(socket);
+
+                int expect_reply = 1;
+                while (expect_reply > 0) {
+                    //  Poll socket for a reply, with timeout
+                    int rc = poller.poll(timeout);
+                    if (rc == -1)
+                        break; //  Interrupted
+
+                    //  Here we process a server reply and exit our loop if the
+                    //  reply is valid. If we didn't a reply we close the client
+                    //  socket and resend the request. We try a number of times
+                    //  before finally abandoning:
+
+                    if (poller.pollin(0)) {
+                        //  We got a reply from the server, must match
+                        //  getSequence
+                        String responseMessage = socket.recvStr();
+                        if (responseMessage == null)
+                            break; //  Interrupted
+
+                        ProtocolMessage response = new MessageParser(responseMessage).getMessage();
+                        if (response instanceof StatusMessage) {
+                            return (StatusMessage) response;
+                        } else {
+                            System.out.println("Unexpected server response.");
+                            return null;
+                        }
+                    } else if (--retriesLeft == 0) {
+                        System.out.println("Exceeded number of tries. Timeout. No response");
+                        return null;
+                    } else {
+                        System.out.println("No response from server, retrying");
+                        //  Old socket is confused; close it and open a new one
+                        poller.unregister(socket);
+                        this.getContext().destroySocket(socket);
+                        System.out.println("Reconnecting to server\n");
+                        socket = this.getContext().createSocket(SocketType.REQ);
+                        if (!socket.connect("tcp://" + proxy)) {
+                            System.out.println("Could not connect to " + proxy + ".");
+                            continue;
+                        }
+                        poller.register(socket, ZMQ.Poller.POLLIN);
+                        //  Send request again, on new socket
+                        message.send(socket);
+                    }
+                }
+            }
+        }
+        System.out.println("Connection failed.");
+        return null;
+    }
+
+
     public void get(String topic) throws IOException {
         String lastCounter = "-1";
-        if (storage.exists(topic + File.separator + LAST_ID_FILE)){
+        if (storage.exists(topic + File.separator + LAST_ID_FILE)) {
             lastCounter = this.storage.read(topic + File.separator + LAST_ID_FILE);
         }
-        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic, lastCounter), -1);
+        StatusMessage replyMessage = this.sendNEW(new GetMessage(this.getAddress(), topic, lastCounter), 100);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -97,7 +165,7 @@ public class Client extends Node {
             System.out.println("==================================================");
             System.out.println(replyMessage.getCounter());
             System.out.println(replyMessage.getBody());
-            if (!storage.exists(topic + File.separator + LAST_ID_FILE)){
+            if (!storage.exists(topic + File.separator + LAST_ID_FILE)) {
                 storage.makeDirectory(topic);
             }
             this.storage.write(topic + File.separator + LAST_ID_FILE, replyMessage.getCounter());
@@ -114,7 +182,7 @@ public class Client extends Node {
             throw new RuntimeException(e);
         }
 
-        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, counter, message), 100);
+        StatusMessage replyMessage = this.sendNEW(new PutMessage(this.getAddress(), topic, counter, message), 100);
 
         if (replyMessage == null) return;
 
@@ -128,7 +196,7 @@ public class Client extends Node {
     }
 
     public void subscribe(String topic) throws IOException {
-        StatusMessage replyMessage = this.send(new SubscribeMessage(this.getAddress(), topic), -1);
+        StatusMessage replyMessage = this.sendNEW(new SubscribeMessage(this.getAddress(), topic), -1);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -138,7 +206,7 @@ public class Client extends Node {
             storage.makeDirectory(topic);
             this.storage.write(topic + File.separator + LAST_ID_FILE, "-1");
         } else if (status.equals(ResponseStatus.ALREADY_SUBSCRIBED)) {
-            if (!storage.exists(topic + File.separator + LAST_ID_FILE)){
+            if (!storage.exists(topic + File.separator + LAST_ID_FILE)) {
                 storage.makeDirectory(topic);
                 this.storage.write(topic + File.separator + LAST_ID_FILE, "-1");
             }
@@ -149,7 +217,7 @@ public class Client extends Node {
     }
 
     public void unsubscribe(String topic) throws IOException {
-        StatusMessage replyMessage = this.send(new UnsubscribeMessage(this.getAddress(), topic), -1);
+        StatusMessage replyMessage = this.sendNEW(new UnsubscribeMessage(this.getAddress(), topic), -1);
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -176,7 +244,7 @@ public class Client extends Node {
         try {
             this.loadTopicsLastMessage();
         } catch (IOException e) {
-            throw new RuntimeException("Could not load topic topics_last_message file.");
+            throw new RuntimeException("Could not load topics_last_message file.");
         }
     }
 
