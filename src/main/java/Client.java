@@ -11,7 +11,6 @@ import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -21,11 +20,10 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Client extends Node {
-    public static final String LAST_ID_FILE = "last_id";
+    public static final String LAST_ID_FILE = "last_get_id";
+    public final String TOPICS_LAST_MESSAGE_COUNTER_FILE = "last_put_counter";
     private static final Integer MAX_TRIES = 3;
     private static final Integer TIMEOUT = 1000;
-
-    public final String TOPICS_LAST_MESSAGE_FILE = "topics_last_message";
     private final PersistentStorage storage;
     private final List<String> proxies;
     private final Map<String, Integer> topicsMessagesCounter;
@@ -82,7 +80,7 @@ public class Client extends Node {
     public void put(String topic, String message) {
         Integer counter = this.topicsMessagesCounter.merge(topic, 1, Integer::sum);
         try {
-            this.updateLastPutMessageClient();
+            this.updateLastPutMessageClient(topic);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -136,33 +134,31 @@ public class Client extends Node {
         }
     }
 
-    private void updateLastPutMessageClient() throws IOException {
-        try (FileWriter writer = this.storage.write(this.TOPICS_LAST_MESSAGE_FILE)) {
-            for (Map.Entry<String, Integer> entry : this.topicsMessagesCounter.entrySet()) {
-                writer.write(entry.getKey() + " " + entry.getValue());
-                writer.write(System.lineSeparator());
-            }
+    private void updateLastPutMessageClient(String topic) throws IOException {
+        if (!storage.exists(topic + File.separator + this.TOPICS_LAST_MESSAGE_COUNTER_FILE)) {
+            storage.makeDirectory(topic);
         }
+
+        this.storage.write(topic + File.separator + this.TOPICS_LAST_MESSAGE_COUNTER_FILE,
+                Integer.toString(this.topicsMessagesCounter.get(topic)));
     }
 
     public void start() {
         try {
-            this.loadTopicsLastMessage();
+            this.loadTopicsLastMessage(this.storage.listFiles());
         } catch (IOException e) {
             throw new RuntimeException("Could not load topics_last_message file.");
         }
     }
 
-    private void loadTopicsLastMessage() throws IOException {
-        if (!this.storage.exists(this.TOPICS_LAST_MESSAGE_FILE)) {
-            this.storage.write(this.TOPICS_LAST_MESSAGE_FILE, "");
-            return;
-        }
+    private void loadTopicsLastMessage(List<String> topics) throws IOException {
+        for (String topic : topics) {
+            if (!this.storage.exists(topic + File.separator + this.TOPICS_LAST_MESSAGE_COUNTER_FILE)) {
+                continue;
+            }
 
-        List<String> topicsStrings = this.storage.readLines(this.TOPICS_LAST_MESSAGE_FILE);
-        for (String topicsString : topicsStrings) {
-            String[] topicLines = topicsString.split(" ");
-            this.topicsMessagesCounter.put(topicLines[0], Integer.valueOf(topicLines[1]));
+            String counter = this.storage.read(topic + File.separator + this.TOPICS_LAST_MESSAGE_COUNTER_FILE);
+            this.topicsMessagesCounter.put(topic, Integer.valueOf(counter));
         }
     }
 
