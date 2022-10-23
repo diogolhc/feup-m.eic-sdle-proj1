@@ -22,7 +22,7 @@ public class Server extends Node {
 
     public Server(ZContext context, String address, List<String> proxies) {
         super(context, address);
-        this.storage = new PersistentStorage(address.replace(":", "_"));
+        this.storage = new PersistentStorage("server_" + address.replace(":", "_"));
         this.topics = new HashMap<>();
         this.proxies = proxies;
     }
