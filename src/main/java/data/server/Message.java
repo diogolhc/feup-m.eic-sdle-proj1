@@ -1,16 +1,17 @@
 package data.server;
 
 import data.PersistentStorage;
+
 import java.io.IOException;
 import java.util.Objects;
 
 public class Message {
     public static final String MESSAGES_FOLDER = "messages/";
 
-    private final int id;
+    private final String id;
     private final String content;
 
-    public Message(int id, String content) {
+    public Message(String id, String content) {
         this.id = id;
         this.content = content;
     }
@@ -19,11 +20,11 @@ public class Message {
         return this.content;
     }
 
-    public int getId() {
+    public String getId() {
         return this.id;
     }
 
-    private static String getPath(String topicPath, int id) {
+    private static String getPath(String topicPath, String id) {
         return topicPath + "/" + MESSAGES_FOLDER + id;
     }
 
@@ -31,7 +32,7 @@ public class Message {
         return getPath(topicPath, this.id);
     }
 
-    public static Message load(PersistentStorage storage, String topicPath, int id) throws IOException {
+    public static Message load(PersistentStorage storage, String topicPath, String id) throws IOException {
         return new Message(id, storage.read(Message.getPath(topicPath, id)));
     }
 

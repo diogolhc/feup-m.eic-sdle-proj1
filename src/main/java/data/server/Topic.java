@@ -14,7 +14,6 @@ public class Topic {
     private final PersistentStorage storage;
     private final String name;
     private final Map<String, Subscriber> subscribers;
-    private Integer messageCounter;
 
     private final Map<String, Integer> clientMessagePutCounter;
 
@@ -22,7 +21,6 @@ public class Topic {
         this.storage = storage;
         this.name = name;
         this.subscribers = new HashMap<>();
-        this.messageCounter = 0;
         this.clientMessagePutCounter = new HashMap<>();
     }
 
@@ -34,23 +32,20 @@ public class Topic {
         Topic topic = new Topic(storage, name);
 
         storage.makeDirectory(name, Message.MESSAGES_FOLDER);
-        Map<Integer, Message> messages = new HashMap<>();
+        Map<String, Message> messages = new HashMap<>();
         for (String messageFile : storage.listFiles(name, Message.MESSAGES_FOLDER)) {
-            int messageId = Integer.parseInt(messageFile);
-            Message message = Message.load(storage, name, messageId);
-            if (messageId > topic.messageCounter) {
-                topic.messageCounter = messageId;
-            }
+            String messageId = messageFile;
+            Message message = Message.load(storage, name, messageFile);
             messages.put(messageId, message);
         }
 
         topic.loadSubscribers(messages);
-        topic.loadPublishersLastMessage(messages);
+        topic.loadPublishersLastMessage();
 
         return topic;
     }
 
-    private void loadSubscribers(Map<Integer, Message> messages) throws IOException {
+    private void loadSubscribers(Map<String, Message> messages) throws IOException {
         if (!this.storage.exists(this.name, SUBSCRIBERS_FILE)) {
             this.storage.write(this.name + File.separator + SUBSCRIBERS_FILE, "");
             return;
@@ -63,7 +58,7 @@ public class Topic {
         }
     }
 
-    private void loadPublishersLastMessage(Map<Integer, Message> messages) throws IOException {
+    private void loadPublishersLastMessage() throws IOException {
         if (!this.storage.exists(this.name, PUBLISHERS_FILE)) {
             this.storage.write(this.name + File.separator + PUBLISHERS_FILE, "");
             return;
@@ -124,7 +119,7 @@ public class Topic {
     }
 
     public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException {
-        Message message = new Message(messageCounter, content);
+        Message message = new Message(publisher + "_" + publisherCounter, content);
         message.save(this.storage, this.name);
 
         Integer counter = this.clientMessagePutCounter.get(publisher);
@@ -147,7 +142,6 @@ public class Topic {
 
         try {
             this.updateSubscribers();
-            messageCounter += 1;
         } catch (IOException e) {
             try {
                 message.delete(this.storage, this.name);
