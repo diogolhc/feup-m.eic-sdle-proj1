@@ -15,13 +15,13 @@ public class Subscriber {
         this.messages = new LinkedBlockingDeque<>();
     }
 
-    public static Subscriber load(String data, Map<Integer, Message> messages) {
+    public static Subscriber load(String data, Map<String, Message> messages) {
         String[] subscriberData = data.split(" ");
         String subscriberId = subscriberData[0];
         Subscriber subscriber = new Subscriber(subscriberId);
 
         for (int i = 1; i < subscriberData.length; i++) {
-            int messageId = Integer.parseInt(subscriberData[i]);
+            String messageId = subscriberData[i];
             subscriber.messages.add(messages.get(messageId));
         }
 
@@ -41,7 +41,7 @@ public class Subscriber {
     }
 
     public boolean repeatedLastCounter(String lastCounter) {
-        if (lastCounter.equals(Integer.toString(this.messages.peek().getId()))) {
+        if (lastCounter.equals(this.messages.peek().getId())) {
             this.messages.remove();
             return true;
         }
@@ -68,7 +68,7 @@ public class Subscriber {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append(id).append(' ');
-        for (Message message: this.messages) {
+        for (Message message : this.messages) {
             sb.append(message.getId()).append(' ');
         }
         return sb.toString();

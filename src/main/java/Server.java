@@ -30,7 +30,7 @@ public class Server extends Node {
     }
 
     public void start() {
-        for (String topic: this.storage.listFiles()) {
+        for (String topic : this.storage.listFiles()) {
             try {
                 this.topics.put(topic, Topic.load(this.storage, topic));
             } catch (IOException e) {
@@ -175,14 +175,14 @@ public class Server extends Node {
 
             String lastCounter = ((GetMessage) message).getCounter();
 
-            if (topic.subscriberRepeatedLastCounter(clientId, lastCounter)){
+            if (topic.subscriberRepeatedLastCounter(clientId, lastCounter)) {
                 if (!topic.hasMessages(clientId)) {
                     return new StatusMessage(this.getAddress(), ResponseStatus.NO_MESSAGES);
                 }
             }
 
             Message messageToGet = topic.getMessage(clientId, lastCounter);
-            String getMessageCounter = Integer.toString(messageToGet.getId());
+            String getMessageCounter = messageToGet.getId();
             return new StatusMessage(this.getAddress(), ResponseStatus.OK, getMessageCounter, messageToGet.getContent());
         } else if (message instanceof PutMessage) {
             try {

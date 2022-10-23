@@ -116,11 +116,11 @@ public class MessageParser {
 
         String[] subs = tokens[0].split("\r\n");
 
-        Map<Integer, Message> messages = new HashMap<>();
+        Map<String, Message> messages = new HashMap<>();
         for (int i = 1; i < tokens.length; i++) {
             int idIndex = tokens[i].indexOf("\r\n");
 
-            int id = Integer.parseInt(tokens[i].substring(0, idIndex));
+            String id = tokens[i].substring(0, idIndex);
             String stuffedContent = tokens[i].substring(idIndex + 2, tokens[i].length() - 2);
 
             // unStuffing by reversing the following:
@@ -159,7 +159,7 @@ public class MessageParser {
             String id = subTokens[0];
             Subscriber s = new Subscriber(id);
             for (int i = 1; i < subTokens.length; i++) {
-                int messageId = Integer.parseInt(subTokens[i]);
+                String messageId = subTokens[i];
                 Message m = messages.get(messageId);
                 if (m != null) {
                     s.putMessage(m);
