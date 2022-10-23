@@ -23,7 +23,7 @@ public class Client extends Node {
     public static final String LAST_ID_FILE = "last_get_id";
     public final String TOPICS_LAST_MESSAGE_COUNTER_FILE = "last_put_counter";
     private static final Integer MAX_TRIES = 3;
-    private static final Integer TIMEOUT = 1000;
+    private static final Integer TIMEOUT_MS = 1000;
     private final PersistentStorage storage;
     private final List<String> proxies;
     private final Map<String, Integer> topicsMessagesCounter;
@@ -45,7 +45,7 @@ public class Client extends Node {
                 continue;
             }
 
-            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), proxy, socket, MAX_TRIES, TIMEOUT);
+            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), proxy, socket, MAX_TRIES, TIMEOUT_MS);
             if (response instanceof StatusMessage)
                 return (StatusMessage) response;
         }

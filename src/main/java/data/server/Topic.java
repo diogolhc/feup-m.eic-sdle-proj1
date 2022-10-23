@@ -13,7 +13,7 @@ public class Topic {
 
     private final PersistentStorage storage;
     private final String name;
-    private final Map<String, Subscriber> subscribers;
+    private Map<String, Subscriber> subscribers;
 
     private final Map<String, Integer> clientMessagePutCounter;
 
@@ -26,6 +26,10 @@ public class Topic {
 
     public String getName() {
         return this.name;
+    }
+
+    public List<Subscriber> getSubscribers() {
+        return new LinkedList<>(subscribers.values());
     }
 
     public static Topic load(PersistentStorage storage, String name) throws IOException {
@@ -90,6 +94,21 @@ public class Topic {
         }
     }
 
+    public void addSubscribersFromTransfer(List<Subscriber> subscribers) throws IOException {
+        Map<String, Subscriber> oldSubs = new HashMap<>(this.subscribers);
+
+        for (Subscriber subscriber: subscribers){
+            this.subscribers.put(subscriber.getId(), subscriber);
+        }
+
+        try {
+            this.updateSubscribers();
+        } catch (IOException e) {
+            this.subscribers = oldSubs;
+            throw e;
+        }
+    }
+
     public void addSubscriber(String subscriberId) throws IOException {
         this.subscribers.put(subscriberId, new Subscriber(subscriberId));
         try {
@@ -118,8 +137,8 @@ public class Topic {
         return this.subscribers.get(subscriberId).getMessage(lastCounter);
     }
 
-    public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException {
-        Message message = new Message(publisher + "_" + publisherCounter, content);
+    public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException{
+        Message message = new Message(publisher.replace(":", "_") + "-" + publisherCounter, content);
         message.save(this.storage, this.name);
 
         Integer counter = this.clientMessagePutCounter.get(publisher);
@@ -152,7 +171,7 @@ public class Topic {
             for (Subscriber subscriber : this.subscribers.values()) {
                 subscriber.undoMessage();
             }
-
+            System.out.println("HERE 4");
             throw e;
         }
     }
@@ -181,5 +200,9 @@ public class Topic {
     @Override
     public int hashCode() {
         return Objects.hash(name);
+    }
+
+    public void deleteFromPersistence() throws IOException {
+        this.storage.deleteRecursively(this.name);
     }
 }
