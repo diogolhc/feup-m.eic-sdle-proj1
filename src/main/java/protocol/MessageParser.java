@@ -125,7 +125,7 @@ public class MessageParser {
 
             // unStuffing by reversing the following:
             // *  -> /s
-            // /* -> //s
+            // /* -> ///s
             // /s -> /s
             // /  -> //
             // // -> ////

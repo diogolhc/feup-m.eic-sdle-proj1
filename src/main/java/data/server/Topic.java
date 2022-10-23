@@ -13,7 +13,7 @@ public class Topic {
 
     private final PersistentStorage storage;
     private final String name;
-    private final Map<String, Subscriber> subscribers;
+    private Map<String, Subscriber> subscribers;
 
     private final Map<String, Integer> clientMessagePutCounter;
 
@@ -26,6 +26,10 @@ public class Topic {
 
     public String getName() {
         return this.name;
+    }
+
+    public List<Subscriber> getSubscribers() {
+        return new LinkedList<>(subscribers.values());
     }
 
     public static Topic load(PersistentStorage storage, String name) throws IOException {
@@ -87,6 +91,21 @@ public class Topic {
                 writer.write(entry.getKey() + " " + entry.getValue());
                 writer.write(System.lineSeparator());
             }
+        }
+    }
+
+    public void addSubscribersFromTransfer(List<Subscriber> subscribers) throws IOException {
+        Map<String, Subscriber> oldSubs = new HashMap<>(this.subscribers);
+
+        for (Subscriber subscriber: subscribers){
+            this.subscribers.put(subscriber.getId(), subscriber);
+        }
+
+        try {
+            this.updateSubscribers();
+        } catch (IOException e) {
+            this.subscribers = oldSubs;
+            throw e;
         }
     }
 
@@ -181,5 +200,9 @@ public class Topic {
     @Override
     public int hashCode() {
         return Objects.hash(name);
+    }
+
+    public void deleteFromPersistence() throws IOException {
+        this.storage.deleteRecursively(this.name);
     }
 }
