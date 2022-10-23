@@ -40,7 +40,7 @@ public class Server extends Node {
         }
 
         Thread serverPeriodicThread = new ServerPeriodicThread(this.getContext(), this.getAddress(), this.proxies, topics);
-        serverPeriodicThread.start(); // TODO stop this thread (?)
+        serverPeriodicThread.start();
 
         this.listen();
     }
@@ -56,7 +56,6 @@ public class Server extends Node {
             System.out.println("Received " + message.getClass().getSimpleName() + " from " + message.getId());
             if (message instanceof TopicsMessage) {
                 StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
-                //TODO respond status with server address or client address?
                 statusMessage.send(socket);
             } else if (message instanceof MergeMessage) {
                 new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
@@ -186,12 +185,10 @@ public class Server extends Node {
             return new StatusMessage(this.getAddress(), ResponseStatus.OK, getMessageCounter, messageToGet.getContent());
         } else if (message instanceof PutMessage) {
             try {
-                // TODO if no subscribers, NOOP? probably not, since there may be subscribers and this is the wrong server
-                //      but still, we need some kind of 'garbage collection' or 'reference counting' for messages
-                //      so that we don't store messages forever once everyone read them
-                //      or maybe yes, since that would be easier and its a rare case that we don't need to take into account
-
-                topic.putMessage(message.getBody(), clientId, ((PutMessage) message).getCounter());
+                // put message only if it has subscribers
+                if (topic.hasSubscribers()) {
+                    topic.putMessage(message.getBody(), clientId, ((PutMessage) message).getCounter());
+                }
             } catch (Exception e) {
                 return new StatusMessage(this.getAddress(), ResponseStatus.INTERNAL_ERROR);
             }

@@ -199,6 +199,10 @@ public class Topic {
         return this.subscribers.get(clientId).hasMessages();
     }
 
+    public boolean hasSubscribers() {
+        return !this.subscribers.isEmpty();
+    }
+
     @Override
     public String toString() {
         return this.name;

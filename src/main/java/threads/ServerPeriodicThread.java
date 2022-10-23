@@ -42,8 +42,6 @@ public class ServerPeriodicThread extends Thread {
             }
 
             try {
-                // TODO avoid busy waiting?
-                // don't know if good idea to put this thread and the main one into a threadpool...
                 sleep(PERIOD_MS);
             } catch (InterruptedException e) {
                 e.printStackTrace();

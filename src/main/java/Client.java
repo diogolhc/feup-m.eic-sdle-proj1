@@ -214,7 +214,6 @@ public class Client extends Node {
             return;
         }
 
-        // TODO timeouts on requests?
         try (ZContext context = new ZContext()) {
             Client client = new Client(context, args[1], proxies);
             client.start();
@@ -235,7 +234,7 @@ public class Client extends Node {
                     printUsage();
             }
         } catch (IOException e) {
-            throw new RuntimeException(e); //TODO deal with exception
+            throw new RuntimeException(e);
         }
     }
 }

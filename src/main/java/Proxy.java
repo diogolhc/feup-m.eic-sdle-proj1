@@ -29,7 +29,6 @@ public class Proxy extends Node {
             String serverId = this.topicServerMapping.getServer(message.getTopic());
             ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
             if (!serverSocket.connect("tcp://" + serverId)) {
-                // TODO proxy address or client address?
                 new StatusMessage(this.getAddress(), ResponseStatus.SERVER_UNAVAILABLE).send(clientSocket);
                 return;
             }
@@ -60,7 +59,6 @@ public class Proxy extends Node {
                 serverToSend = message.getId();
             }
 
-            // TODO do not create this socket (?) use one saved?
             ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
             serverSocket.connect("tcp://" + serverToSend);
             mergeMessage.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverToSend, serverSocket, MAX_TRIES, TIMEOUT_MS);
