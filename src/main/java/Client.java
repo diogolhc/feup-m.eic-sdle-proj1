@@ -23,6 +23,7 @@ import java.util.Objects;
 public class Client extends Node {
     public static final String LAST_ID_FILE = "last_id";
     public static final Integer MAX_TRIES = 3;
+    public static final Integer TIMEOUT = 1000;
 
     public final String TOPICS_LAST_MESSAGE_FILE = "topics_last_message";
     private final PersistentStorage storage;
@@ -37,7 +38,7 @@ public class Client extends Node {
         this.topicsMessagesCounter = new HashMap<>();
     }
 
-    public StatusMessage send(ProtocolMessage message, Integer timeout) {
+    public StatusMessage send(ProtocolMessage message) {
         for (String proxy : this.proxies) {
             System.out.println("sending to " + proxy + "...");
             ZMQ.Socket socket = this.getContext().createSocket(SocketType.REQ);
@@ -46,7 +47,7 @@ public class Client extends Node {
                 continue;
             }
 
-            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), proxy, socket, MAX_TRIES, timeout);
+            ProtocolMessage response = message.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), proxy, socket, MAX_TRIES, TIMEOUT);
             if (response instanceof StatusMessage)
                 return (StatusMessage) response;
         }
@@ -59,7 +60,7 @@ public class Client extends Node {
         if (storage.exists(topic + File.separator + LAST_ID_FILE)) {
             lastCounter = this.storage.read(topic + File.separator + LAST_ID_FILE);
         }
-        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic, lastCounter), 1000);
+        StatusMessage replyMessage = this.send(new GetMessage(this.getAddress(), topic, lastCounter));
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -86,7 +87,7 @@ public class Client extends Node {
             throw new RuntimeException(e);
         }
 
-        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, counter, message), 1000);
+        StatusMessage replyMessage = this.send(new PutMessage(this.getAddress(), topic, counter, message));
 
         if (replyMessage == null) return;
 
@@ -100,7 +101,7 @@ public class Client extends Node {
     }
 
     public void subscribe(String topic) throws IOException {
-        StatusMessage replyMessage = this.send(new SubscribeMessage(this.getAddress(), topic), -1);
+        StatusMessage replyMessage = this.send(new SubscribeMessage(this.getAddress(), topic));
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
@@ -121,7 +122,7 @@ public class Client extends Node {
     }
 
     public void unsubscribe(String topic) throws IOException {
-        StatusMessage replyMessage = this.send(new UnsubscribeMessage(this.getAddress(), topic), -1);
+        StatusMessage replyMessage = this.send(new UnsubscribeMessage(this.getAddress(), topic));
         if (replyMessage == null) return;
 
         ResponseStatus status = replyMessage.getStatus();
