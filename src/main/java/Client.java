@@ -29,10 +29,10 @@ public class Client extends Node {
     private final Map<String, Integer> topicsMessagesCounter;
 
 
-    public Client(ZContext context, String address, List<String> proxies) {
-        super(context, address);
+    public Client(ZContext context, String clientId, List<String> proxies) {
+        super(context, clientId);
         this.proxies = proxies;
-        this.storage = new PersistentStorage("client_" + address.replace(":", "_"));
+        this.storage = new PersistentStorage("client_" + clientId);
         this.topicsMessagesCounter = new HashMap<>();
     }
 
@@ -172,12 +172,6 @@ public class Client extends Node {
 
     public static void main(String[] args) {
         if (args.length != 3 && args.length != 4) {
-            printUsage();
-            return;
-        }
-
-        if (!Node.validateAddress(args[0])) {
-            System.out.println("Invalid <IP>:<PORT>: " + args[0]);
             printUsage();
             return;
         }

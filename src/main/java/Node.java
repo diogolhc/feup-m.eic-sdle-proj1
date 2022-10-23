@@ -15,13 +15,21 @@ public abstract class Node {
     private final ZContext context;
 
     public Node(ZContext context, String address) {
-        String[] parts = address.split(":");
-        this.ip = parts[0];
-        this.port = parts[1];
+        if (address.contains(":")) {
+            String[] parts = address.split(":");
+            this.ip = parts[0];
+            this.port = parts[1];
+        } else {
+            this.ip = address;
+            this.port = "";
+        }
         this.context = context;
     }
 
     public String getAddress() {
+        if (this.port.equals("")) {
+            return this.ip;
+        }
         return this.ip + ":" + this.port;
     }
 
