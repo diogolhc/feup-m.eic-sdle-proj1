@@ -3,9 +3,9 @@ package protocol;
 import data.server.Message;
 import data.server.Subscriber;
 import org.zeromq.ZMQ;
-import protocol.membership.PeriodicServerMessage;
-import protocol.membership.ServerGiveTopicMessage;
-import protocol.membership.ServerTopicConflictWarnMessage;
+import protocol.membership.PeriodicMessage;
+import protocol.membership.TransferMessage;
+import protocol.membership.MergeMessage;
 import protocol.topics.GetMessage;
 import protocol.topics.PutMessage;
 import protocol.topics.SubscribeMessage;
@@ -74,24 +74,24 @@ public class MessageParser {
                     return new UnsubscribeMessage(headerFields[1], headerFields[2]);
                 }
                 break;
-            case PeriodicServerMessage.TYPE:
+            case PeriodicMessage.TYPE:
                 if (headerFields.length == 2) {
                     if (bodyMessage == null) {
-                        return new PeriodicServerMessage(headerFields[1], new HashSet<>());
+                        return new PeriodicMessage(headerFields[1], new HashSet<>());
                     } else {
-                        return new PeriodicServerMessage(headerFields[1], new HashSet<>(Arrays.asList(bodyMessage.split(" ").clone())));
+                        return new PeriodicMessage(headerFields[1], new HashSet<>(Arrays.asList(bodyMessage.split(" ").clone())));
                     }
                 }
                 break;
-            case ServerGiveTopicMessage.TYPE:
-                ServerGiveTopicMessage serverGiveTopicMessage = parseServerGiveTopicMessage(headerFields, bodyMessage);
-                if (serverGiveTopicMessage != null) {
-                    return serverGiveTopicMessage;
+            case TransferMessage.TYPE:
+                TransferMessage transferMessage = parseServerGiveTopicMessage(headerFields, bodyMessage);
+                if (transferMessage != null) {
+                    return transferMessage;
                 }
                 break;
-            case ServerTopicConflictWarnMessage.TYPE:
+            case MergeMessage.TYPE:
                 if (headerFields.length == 4) {
-                    return new ServerTopicConflictWarnMessage(headerFields[1], headerFields[2], headerFields[3]);
+                    return new MergeMessage(headerFields[1], headerFields[2], headerFields[3]);
                 }
                 break;
         }
@@ -99,13 +99,13 @@ public class MessageParser {
         throw new RuntimeException("Tried to parse an invalid message of type: " + headerFields[0]);
     }
 
-    private ServerGiveTopicMessage parseServerGiveTopicMessage(String[] headerFields, String bodyMessage) {
+    private TransferMessage parseServerGiveTopicMessage(String[] headerFields, String bodyMessage) {
         if (headerFields.length != 3) {
             return null;
         }
 
         if (bodyMessage == null) {
-            return new ServerGiveTopicMessage(headerFields[1], headerFields[2], new ArrayList<>());
+            return new TransferMessage(headerFields[1], headerFields[2], new ArrayList<>());
         }
 
 
@@ -169,7 +169,7 @@ public class MessageParser {
             subscribers.add(s);
         }
 
-        return new ServerGiveTopicMessage(headerFields[1], headerFields[2], subscribers);
+        return new TransferMessage(headerFields[1], headerFields[2], subscribers);
     }
 
 }

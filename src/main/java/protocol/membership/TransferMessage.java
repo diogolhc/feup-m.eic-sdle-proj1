@@ -24,14 +24,14 @@ fagagoajivs0ivjsgjr0gvskrg
  */
 // /s == *
 
-// GIVE_TOPIC <ID> <TOPIC> CRLF CRLF [[<sub1.getString()> CRLF ...] [*ID CRLF CONTENT ...]]
-public class ServerGiveTopicMessage extends ProtocolMessage {
-    public final static String TYPE = "GIVE_TOPIC";
+// TRANSFER <ID> <TOPIC> CRLF CRLF [[<sub1.getString()> CRLF ...] [*ID CRLF CONTENT ...]]
+public class TransferMessage extends ProtocolMessage {
+    public final static String TYPE = "TRANSFER";
 
     private final List<Subscriber> subscribers;
     private final String topic;
 
-    public ServerGiveTopicMessage(String id, String topic, List<Subscriber> subscribers) {
+    public TransferMessage(String id, String topic, List<Subscriber> subscribers) {
         super(id);
         this.topic = topic;
         this.subscribers = subscribers;

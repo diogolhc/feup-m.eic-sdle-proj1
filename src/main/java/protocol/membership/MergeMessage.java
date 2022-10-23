@@ -5,14 +5,14 @@ import protocol.ProtocolMessage;
 import java.util.LinkedList;
 import java.util.List;
 
-// TOPIC_CONFLICT <ID> <TOPIC> <SERVER_CONFLICT_ID> CRLF CRLF
-public class ServerTopicConflictWarnMessage extends ProtocolMessage {
-    public final static String TYPE = "TOPIC_CONFLICT";
+// MERGE <ID> <TOPIC> <SERVER_CONFLICT_ID> CRLF CRLF
+public class MergeMessage extends ProtocolMessage {
+    public final static String TYPE = "MERGE";
 
     private final String topic;
     private final String serverConflict;
 
-    public ServerTopicConflictWarnMessage(String id, String topic, String serverConflict) {
+    public MergeMessage(String id, String topic, String serverConflict) {
         super(id);
         this.topic = topic;
         this.serverConflict = serverConflict;

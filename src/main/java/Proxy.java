@@ -5,8 +5,8 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
-import protocol.membership.PeriodicServerMessage;
-import protocol.membership.ServerTopicConflictWarnMessage;
+import protocol.membership.PeriodicMessage;
+import protocol.membership.MergeMessage;
 import protocol.topics.*;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
@@ -43,7 +43,7 @@ public class Proxy extends Node {
         }
     }
 
-    public void updateServers(PeriodicServerMessage message) {
+    public void updateServers(PeriodicMessage message) {
         Map<String, String> serversWithSameTopic = this.topicServerMapping.updateServers(message.getId(), message.getTopics());
 
         for (Map.Entry<String,String> entry : serversWithSameTopic.entrySet()) {
@@ -51,19 +51,19 @@ public class Proxy extends Node {
             String serverConflict = entry.getValue();
 
             String serverToSend;
-            ServerTopicConflictWarnMessage serverTopicConflictWarnMessage;
+            MergeMessage mergeMessage;
             if (serverConflict.compareTo(message.getId()) < 0) {
-                serverTopicConflictWarnMessage = new ServerTopicConflictWarnMessage(this.getAddress(), topicConflict, message.getId());
+                mergeMessage = new MergeMessage(this.getAddress(), topicConflict, message.getId());
                 serverToSend = serverConflict;
             } else {
-                serverTopicConflictWarnMessage = new ServerTopicConflictWarnMessage(this.getAddress(), topicConflict, serverConflict);
+                mergeMessage = new MergeMessage(this.getAddress(), topicConflict, serverConflict);
                 serverToSend = message.getId();
             }
 
             // TODO do not create this socket (?) use one saved?
             ZMQ.Socket serverSocket = this.getContext().createSocket(SocketType.REQ);
             serverSocket.connect("tcp://" + serverToSend);
-            serverTopicConflictWarnMessage.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverToSend, serverSocket, MAX_TRIES, TIMEOUT_MS);
+            mergeMessage.sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverToSend, serverSocket, MAX_TRIES, TIMEOUT_MS);
         }
     }
 
@@ -78,8 +78,8 @@ public class Proxy extends Node {
             System.out.println("Received " + message.getClass().getSimpleName() + " from " + message.getId());
             if (message instanceof TopicsMessage) {
                 this.dispatchTopicMessage(socket, (TopicsMessage) message);
-            } else if (message instanceof PeriodicServerMessage) {
-                this.updateServers((PeriodicServerMessage) message);
+            } else if (message instanceof PeriodicMessage) {
+                this.updateServers((PeriodicMessage) message);
                 new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
             } else {
                 System.out.println("Unexpected client request.");

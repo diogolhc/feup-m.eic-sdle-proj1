@@ -4,13 +4,13 @@ import protocol.ProtocolMessage;
 
 import java.util.Set;
 
-// PERIODIC_SERVER <ID> CRLF CRLF [<topic1> ...]
-public class PeriodicServerMessage extends ProtocolMessage {
-    public final static String TYPE = "PERIODIC_SERVER";
+// PERIODIC <ID> CRLF CRLF [<topic1> ...]
+public class PeriodicMessage extends ProtocolMessage {
+    public final static String TYPE = "PERIODIC";
 
     private final Set<String> topics;
 
-    public PeriodicServerMessage(String id, Set<String> topics) {
+    public PeriodicMessage(String id, Set<String> topics) {
         super(id);
         this.topics = topics;
     }

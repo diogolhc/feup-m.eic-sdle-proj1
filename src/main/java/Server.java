@@ -7,8 +7,8 @@ import org.zeromq.ZMQ;
 import org.zeromq.ZContext;
 import protocol.MessageParser;
 import protocol.ProtocolMessage;
-import protocol.membership.ServerGiveTopicMessage;
-import protocol.membership.ServerTopicConflictWarnMessage;
+import protocol.membership.TransferMessage;
+import protocol.membership.MergeMessage;
 import protocol.status.ResponseStatus;
 import protocol.status.StatusMessage;
 import protocol.topics.*;
@@ -58,11 +58,11 @@ public class Server extends Node {
                 StatusMessage statusMessage = this.handleTopicMessage((TopicsMessage) message);
                 //TODO respond status with server address or client address?
                 statusMessage.send(socket);
-            } else if (message instanceof ServerTopicConflictWarnMessage) {
+            } else if (message instanceof MergeMessage) {
                 new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
-                this.handleServerTopicConflict((ServerTopicConflictWarnMessage) message);
-            } else if (message instanceof ServerGiveTopicMessage) {
-                if (this.handleServerGiveTopicMessage((ServerGiveTopicMessage) message)) {
+                this.handleServerTopicConflict((MergeMessage) message);
+            } else if (message instanceof TransferMessage) {
+                if (this.handleServerGiveTopicMessage((TransferMessage) message)) {
                     new StatusMessage(this.getAddress(), ResponseStatus.OK).send(socket);
                 } else {
                     new StatusMessage(this.getAddress(), ResponseStatus.TRANSFER_TOPIC_ERROR).send(socket);
@@ -74,7 +74,7 @@ public class Server extends Node {
     }
 
     // return true if server saved the changes successfully
-    private boolean handleServerGiveTopicMessage(ServerGiveTopicMessage message) {
+    private boolean handleServerGiveTopicMessage(TransferMessage message) {
         Topic topic = this.topics.get(message.getTopic());
         boolean addedNow = false;
         if (topic == null) {
@@ -100,7 +100,7 @@ public class Server extends Node {
         return true;
     }
 
-    public void handleServerTopicConflict(ServerTopicConflictWarnMessage message) {
+    public void handleServerTopicConflict(MergeMessage message) {
         String serverConflict = message.getServerConflict();
         Topic topicConflict = this.topics.get(message.getTopic());
         if (topicConflict == null) {
@@ -114,7 +114,7 @@ public class Server extends Node {
             return;
         }
 
-        ProtocolMessage response = new ServerGiveTopicMessage(this.getAddress(), topicConflict.getName(), topicConflict.getSubscribers())
+        ProtocolMessage response = new TransferMessage(this.getAddress(), topicConflict.getName(), topicConflict.getSubscribers())
             .sendWithRetriesAndTimeoutAndGetResponse(this.getContext(), serverConflict, socket, 1, -1);
 
         if (response instanceof StatusMessage) {

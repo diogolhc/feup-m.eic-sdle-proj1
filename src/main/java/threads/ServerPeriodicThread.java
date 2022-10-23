@@ -4,7 +4,7 @@ import data.server.Topic;
 import org.zeromq.SocketType;
 import org.zeromq.ZContext;
 import org.zeromq.ZMQ;
-import protocol.membership.PeriodicServerMessage;
+import protocol.membership.PeriodicMessage;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -36,7 +36,7 @@ public class ServerPeriodicThread extends Thread {
                 }
 
                 Set<String> topicsNames = topics.values().stream().map(Topic::getName).collect(Collectors.toSet());
-                PeriodicServerMessage message = new PeriodicServerMessage(this.address, topicsNames);
+                PeriodicMessage message = new PeriodicMessage(this.address, topicsNames);
                 message.send(socket);
                 System.out.println("Sending " + message.getClass().getSimpleName() + " to " + proxy);
             }
