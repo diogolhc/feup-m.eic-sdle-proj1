@@ -27,5 +27,5 @@ To launch a server run: \
 To launch a client run: \
 ```./gradlew client --args="<ID> subscribe <TOPIC>"``` or\
 ```./gradlew client --args="<ID> unsubscribe <TOPIC>"``` or\
-```./gradlew client --args="<ID> put <TOPIC> MESSAGE_PATH``` or\
+```./gradlew client --args="<ID> put <TOPIC> MESSAGE_PATH"``` or\
 ```./gradlew client --args="<ID> get <TOPIC>```
