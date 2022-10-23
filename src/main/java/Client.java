@@ -164,10 +164,10 @@ public class Client extends Node {
 
     private static void printUsage() {
         System.out.println("usage:");
-        System.out.println("java Client subscribe <IP>:<PORT> <TOPIC>");
-        System.out.println("java Client unsubscribe <IP>:<PORT> <TOPIC>");
-        System.out.println("java Client put <IP>:<PORT> <TOPIC> MESSAGE_PATH");
-        System.out.println("java Client get <IP>:<PORT> <TOPIC>");
+        System.out.println("./gradlew client <ID> subscribe <TOPIC>");
+        System.out.println("./gradlew client <ID> unsubscribe <TOPIC>");
+        System.out.println("./gradlew client <ID> put <TOPIC> MESSAGE_PATH");
+        System.out.println("./gradlew client <ID> get <TOPIC>");
     }
 
     public static void main(String[] args) {
@@ -176,13 +176,13 @@ public class Client extends Node {
             return;
         }
 
-        if (!Node.validateAddress(args[1])) {
-            System.out.println("Invalid <IP>:<PORT>: " + args[1]);
+        if (!Node.validateAddress(args[0])) {
+            System.out.println("Invalid <IP>:<PORT>: " + args[0]);
             printUsage();
             return;
         }
 
-        String operation = args[0];
+        String operation = args[1];
         String topic = args[2];
         String message = null;
         if (args.length == 4) {
@@ -215,7 +215,7 @@ public class Client extends Node {
         }
 
         try (ZContext context = new ZContext()) {
-            Client client = new Client(context, args[1], proxies);
+            Client client = new Client(context, args[0], proxies);
             client.start();
             switch (operation) {
                 case "put":
