@@ -120,10 +120,7 @@ public class Topic {
     }
 
     public Message getMessage(String subscriberId, String lastCounter) {
-        // TODO this is not deleting the message from the subscriber because that should only be done when the subscriber confirms it
-        //  received the message. As such, exactly once fault tolerance should be implemented for that.
-        //  This is also not deleting the message from the topic because that should only be done when it has been deleted from all subscribers.
-        return this.subscribers.get(subscriberId).getMessage(lastCounter);
+       return this.subscribers.get(subscriberId).getMessage(lastCounter);
     }
 
     public void putMessage(String content, String publisher, Integer publisherCounter) throws IOException {
