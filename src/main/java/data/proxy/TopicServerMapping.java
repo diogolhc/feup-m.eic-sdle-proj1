@@ -64,7 +64,7 @@ public class TopicServerMapping {
             if (topicLocation == null) {
                 this.topicsLocations.put(topic, serverId);
             } else if (!topicLocation.equals(serverId)) {
-                serversWithSameTopic.put(topic, topicLocation);
+                if (topicLocation.compareTo(serverId) < 0) this.topicsLocations.put(topic, serverId);
                 System.out.println("Detected topic conflict on: \"" + topic + "\" with servers: " + "\"" + serverId + "\" & \"" + topicLocation + "\"");
             }
         }
